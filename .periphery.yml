@@ -1,0 +1,29 @@
+# Periphery Configuration for Flow
+# Detects unused code in Swift Package Manager project
+
+# Project type
+format: xcode
+
+# Targets to scan
+targets:
+  - Flow
+
+# Paths to index
+index_exclude:
+  - .build
+  - .swiftpm
+  - Tests/TestFixtures.swift
+
+# Options
+# baseline: .periphery.baseline.json  # Currently no baseline needed
+strict: false
+disable_update_check: true
+
+# Retain public declarations (this is a library, so all public APIs are used by consumers)
+retain_public: true
+
+# Retain @objc declarations
+retain_objc_accessible: true
+
+# Clean build before indexing
+clean_build: true

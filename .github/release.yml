@@ -1,0 +1,66 @@
+# GitHub Release Notes Configuration
+# https://docs.github.com/en/repositories/releasing-projects-on-github/automatically-generated-release-notes
+
+changelog:
+  exclude:
+    labels:
+      - ignore-for-release
+      - duplicate
+      - invalid
+      - wontfix
+    authors:
+      - octocat
+
+  categories:
+    - title: 🎉 New Features
+      labels:
+        - feature
+        - enhancement
+        - new
+
+    - title: 🐛 Bug Fixes
+      labels:
+        - bug
+        - fix
+        - bugfix
+
+    - title: 📝 Documentation
+      labels:
+        - documentation
+        - docs
+
+    - title: ♻️ Refactoring
+      labels:
+        - refactor
+        - refactoring
+        - cleanup
+
+    - title: ✅ Testing
+      labels:
+        - test
+        - testing
+
+    - title: ⚡ Performance
+      labels:
+        - performance
+        - optimization
+
+    - title: ⚠️ Breaking Changes
+      labels:
+        - breaking-change
+        - breaking
+
+    - title: 🔧 Maintenance
+      labels:
+        - maintenance
+        - chore
+        - dependencies
+
+    - title: 🔒 Security
+      labels:
+        - security
+
+    # Catch-all for PRs without specific labels
+    - title: 📦 Other Changes
+      labels:
+        - "*"

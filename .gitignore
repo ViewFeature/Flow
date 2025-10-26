@@ -1,0 +1,76 @@
+# Swift Package Manager
+.build/
+.swiftpm/
+Package.resolved
+
+# Xcode
+*.xcodeproj/
+*.xcworkspace/
+xcuserdata/
+*.xcuserstate
+
+# Exception: Include DemoApp Xcode project for easy running
+!Examples/DemoApp.xcodeproj/
+!Examples/DemoApp.xcodeproj/**
+DerivedData/
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+
+# Thumbnails
+._*
+
+# Files that might appear in the root of a volume
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Directories potentially created on remote AFP share
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# IDE/Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Coverage reports
+*.lcov
+*.profdata
+*.profraw
+
+# Test results
+TestResults.xml
+test-results.xml
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+
+# Claude Code
+.claude/
+.claude.md
+
+# Generated documentation (DocC outputs)
+.build/docs/
+*.doccarchive
+docs/

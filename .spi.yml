@@ -1,0 +1,19 @@
+version: 1
+builder:
+  configs:
+    # iOS with DocC documentation
+    - documentation_targets: [Flow]
+      platform: ios
+      swift_version: 6.2
+
+    # macOS
+    - platform: macos
+      swift_version: 6.2
+
+    # watchOS
+    - platform: watchos
+      swift_version: 6.2
+
+    # tvOS
+    - platform: tvos
+      swift_version: 6.2

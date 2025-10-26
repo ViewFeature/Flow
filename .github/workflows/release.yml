@@ -40,12 +40,22 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create ${{ steps.version.outputs.tag }} \
-            --title "${{ steps.version.outputs.version }}" \
-            --generate-notes \
-            --prerelease \
-            --notes-start-tag $(git describe --tags --abbrev=0 ${{ steps.version.outputs.tag }}^ 2>/dev/null || echo "") \
-            --draft=false
+          PREV_TAG=$(git describe --tags --abbrev=0 ${{ steps.version.outputs.tag }}^ 2>/dev/null || echo "")
+
+          if [ -n "$PREV_TAG" ]; then
+            gh release create ${{ steps.version.outputs.tag }} \
+              --title "${{ steps.version.outputs.version }}" \
+              --generate-notes \
+              --prerelease \
+              --notes-start-tag "$PREV_TAG" \
+              --draft=false
+          else
+            gh release create ${{ steps.version.outputs.tag }} \
+              --title "${{ steps.version.outputs.version }}" \
+              --generate-notes \
+              --prerelease \
+              --draft=false
+          fi
 
       - name: Release Summary
         run: |

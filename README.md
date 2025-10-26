@@ -4,7 +4,7 @@
 [![Platforms](https://img.shields.io/badge/Platforms-iOS%20|%20macOS%20|%20watchOS%20|%20tvOS-blue.svg)](https://github.com/ViewFeature/Flow)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-A library for managing state in SwiftUI applications in a type-safe way. Flow provides a unidirectional data flow architecture with full support for Swift 6 Approachable Concurrency.
+A type-safe state management library for SwiftUI applications. Flow provides a unidirectional data flow architecture with full support for Swift 6 Approachable Concurrency.
 
 <p align="center">
     <img src="flow-diagram.svg" alt="Flow Architecture Diagram" />
@@ -171,7 +171,7 @@ final class State {
 ```
 
 - No Combine dependency
-- Reduced code
+- Less boilerplate code
 - Integrates with SwiftUI's standard APIs
 
 ### Approachable Concurrency
@@ -205,11 +205,10 @@ func handle() -> ActionHandler<Action, State, Void> {
 - Thread-safety guaranteed
 - Native `async/await` support
 - Direct state mutations in `.run` blocks
-- Caught at compile time, not runtime
 
 ### Observable Actions
 
-Flow uses **middleware** to observe actions. This enables implementing cross-cutting concerns like logging, analytics, and debugging.
+Flow uses **middleware** to observe actions, enabling cross-cutting concerns like logging, analytics, and debugging.
 
 ```swift
 struct AnalyticsMiddleware: BeforeActionMiddleware {
@@ -231,7 +230,7 @@ func handle() -> ActionHandler<Action, State, Void> {
 ```
 
 - Observe all actions in one place
-- Use for logging, analytics, and debugging
+- Logging, analytics, and debugging support
 
 ## Documentation
 

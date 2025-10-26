@@ -19,7 +19,7 @@ Add Flow to your `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/ViewFeature/Flow.git", from: "0.1.6")
+    .package(url: "https://github.com/ViewFeature/Flow.git", from: "1.0.0")
 ]
 ```
 
@@ -41,7 +41,7 @@ dependencies: [
 
 1. Select **File → Add Package Dependencies**
 2. Enter the URL: `https://github.com/ViewFeature/Flow.git`
-3. Select version: `0.1.6` or later
+3. Select version: `1.0.0` or later
 4. Add to your target's **Build Settings → Other Swift Flags**: `-default-isolation MainActor`
 
 ## Build a Counter App

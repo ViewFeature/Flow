@@ -4,6 +4,8 @@
 [![Platforms](https://img.shields.io/badge/Platforms-iOS%20|%20macOS%20|%20watchOS%20|%20tvOS-blue.svg)](https://github.com/ViewFeature/Flow)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
+[日本語版](README_jp.md)
+
 A type-safe state management library for SwiftUI applications. Flow provides a unidirectional data flow architecture with full support for Swift 6 Approachable Concurrency.
 
 <p align="center">

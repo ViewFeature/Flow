@@ -67,7 +67,7 @@ import Testing
       LoggingMiddleware(),
       LoggingMiddleware(category: "Test1"),
       LoggingMiddleware(category: "Test2"),
-      LoggingMiddleware(category: "Test3"),
+      LoggingMiddleware(category: "Test3")
     ]
 
     // WHEN: Create manager
@@ -166,7 +166,7 @@ import Testing
     let sut = MiddlewareManager<TestAction, TestState>()
     let middlewares: [any BaseActionMiddleware] = [
       LoggingMiddleware(),
-      LoggingMiddleware(),
+      LoggingMiddleware()
     ]
 
     // WHEN: Add middlewares
@@ -193,7 +193,7 @@ import Testing
     let middlewares: [any BaseActionMiddleware] = [
       LoggingMiddleware(),
       LoggingMiddleware(),
-      LoggingMiddleware(),
+      LoggingMiddleware()
     ]
 
     // WHEN: Add middlewares
@@ -210,7 +210,7 @@ import Testing
 
     let newMiddlewares: [any BaseActionMiddleware] = [
       LoggingMiddleware(),
-      LoggingMiddleware(),
+      LoggingMiddleware()
     ]
 
     // WHEN: Add more middlewares
@@ -246,7 +246,7 @@ import Testing
     // GIVEN: Manager with multiple middlewares
     let sut = MiddlewareManager<TestAction, TestState>(middlewares: [
       LoggingMiddleware(logLevel: .debug),
-      LoggingMiddleware(logLevel: .debug),
+      LoggingMiddleware(logLevel: .debug)
     ])
 
     // WHEN & THEN: Should execute both successfully
@@ -314,7 +314,7 @@ import Testing
     // GIVEN: Manager with multiple middlewares
     let sut = MiddlewareManager<TestAction, TestState>(middlewares: [
       LoggingMiddleware(logLevel: .info),
-      LoggingMiddleware(logLevel: .info),
+      LoggingMiddleware(logLevel: .info)
     ])
     let result: ActionTask<TestAction, TestState, Void> = .none
 
@@ -394,7 +394,7 @@ import Testing
     // GIVEN: Manager with multiple middlewares
     let sut = MiddlewareManager<TestAction, TestState>(middlewares: [
       LoggingMiddleware(),
-      LoggingMiddleware(),
+      LoggingMiddleware()
     ])
     let error = NSError(domain: "Test", code: 1)
 
@@ -482,7 +482,7 @@ import Testing
     let secondMiddleware = SecondMiddleware { secondExecuted = true }
     let sut = MiddlewareManager<TestAction, TestState>(middlewares: [
       firstMiddleware,
-      secondMiddleware,
+      secondMiddleware
     ])
     let error = NSError(domain: "TestError", code: 1)
 
@@ -544,7 +544,7 @@ import Testing
     let sut = MiddlewareManager<TestAction, TestState>(middlewares: [
       FirstMiddleware(track: { executionOrder.append($0) }),
       SecondMiddleware(track: { executionOrder.append($0) }),
-      ThirdMiddleware(track: { executionOrder.append($0) }),
+      ThirdMiddleware(track: { executionOrder.append($0) })
     ])
     let error = NSError(domain: "Test", code: 1)
 
@@ -589,7 +589,7 @@ import Testing
     let sut = MiddlewareManager<TestAction, TestState>(middlewares: [
       LoggingMiddleware(logLevel: .debug),
       LoggingMiddleware(logLevel: .info),
-      LoggingMiddleware(logLevel: .error),
+      LoggingMiddleware(logLevel: .error)
     ])
     let result: ActionTask<TestAction, TestState, Void> = .none
 

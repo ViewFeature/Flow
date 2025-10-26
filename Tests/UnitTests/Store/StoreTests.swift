@@ -632,8 +632,7 @@ import Testing
     case .failure(let error):
       #expect(error is StoreError)
       if let storeError = error as? StoreError,
-        case .deallocated = storeError
-      {
+        case .deallocated = storeError {
         // Success - got expected error
         #expect(Bool(true))
       } else {

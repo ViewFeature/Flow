@@ -300,8 +300,7 @@ public final class Store<F: Feature> {
   ///
   /// The current design strikes the right balance: Store orchestrates, TaskManager executes.
   private func executeTask(_ task: ActionTask<F.Action, F.State, F.ActionResult>) async throws
-    -> F.ActionResult
-  {
+    -> F.ActionResult {
     // Check for cancellation before executing
     guard !Task.isCancelled else {
       throw StoreError.cancelled

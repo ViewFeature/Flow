@@ -222,7 +222,7 @@ struct MockAPIClient: APIClient {
     return [
       Item(id: "1", name: "Item 1"),
       Item(id: "2", name: "Item 2"),
-      Item(id: "3", name: "Item 3"),
+      Item(id: "3", name: "Item 3")
     ]
   }
 

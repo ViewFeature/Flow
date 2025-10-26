@@ -7,7 +7,7 @@ struct UserView: View {
       users: [
         User(name: "Alice Johnson", email: "alice@example.com", role: .admin),
         User(name: "Bob Smith", email: "bob@example.com", role: .member),
-        User(name: "Charlie Brown", email: "charlie@example.com", role: .guest),
+        User(name: "Charlie Brown", email: "charlie@example.com", role: .guest)
       ]
     ),
     feature: UserFeature()

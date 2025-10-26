@@ -175,8 +175,7 @@ public final class ActionHandler<Action, State, ActionResult: Sendable> {
   ///   - action: The action to process
   ///   - state: The current state (will be mutated)
   /// - Returns: An ``ActionTask`` containing any asynchronous side effects
-  public func handle(action: Action, state: State) async -> ActionTask<Action, State, ActionResult>
-  {
+  public func handle(action: Action, state: State) async -> ActionTask<Action, State, ActionResult> {
     await processor.process(action: action, state: state)
   }
 }

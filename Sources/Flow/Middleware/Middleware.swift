@@ -201,6 +201,5 @@ public protocol ErrorHandlingMiddleware: BaseActionMiddleware {
 /// - ``AfterActionMiddleware``
 /// - ``ErrorHandlingMiddleware``
 public protocol ActionMiddleware: BeforeActionMiddleware, AfterActionMiddleware,
-  ErrorHandlingMiddleware
-{
+  ErrorHandlingMiddleware {
 }

@@ -50,8 +50,7 @@ public final class ActionProcessor<Action, State, ActionResult: Sendable> {
   /// Processes an action through the middleware pipeline.
   ///
   /// Executes before-action middleware, action logic, after-action middleware, and error handling if needed.
-  public func process(action: Action, state: State) async -> ActionTask<Action, State, ActionResult>
-  {
+  public func process(action: Action, state: State) async -> ActionTask<Action, State, ActionResult> {
     await executeWithMiddleware(action: action, state: state)
   }
 

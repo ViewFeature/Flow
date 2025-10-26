@@ -33,6 +33,26 @@ jobs:
             --transform-for-static-hosting \
             --hosting-base-path Flow
 
+      - name: Fix root index.html redirect
+        run: |
+          cat > ./docs/index.html << 'EOF'
+          <!doctype html>
+          <html lang="en-US">
+          <head>
+            <meta charset="utf-8">
+            <meta http-equiv="refresh" content="0; url=/Flow/documentation/flow/">
+            <link rel="canonical" href="/Flow/documentation/flow/">
+            <title>Redirecting to Flow Documentation</title>
+            <script>
+              window.location.href = "/Flow/documentation/flow/";
+            </script>
+          </head>
+          <body>
+            <p>If you are not redirected automatically, please <a href="/Flow/documentation/flow/">click here</a>.</p>
+          </body>
+          </html>
+          EOF
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:

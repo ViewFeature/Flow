@@ -235,12 +235,13 @@ func handle() -> ActionHandler<Action, State, Void> {
 
 ## Documentation
 
-- **[Overview](Sources/Flow/Flow.docc/Flow.md)**
-- **[Getting Started](Sources/Flow/Flow.docc/GettingStarted.md)**
-- **[Core Concepts](Sources/Flow/Flow.docc/CoreConcepts.md)**
-- **[Core Elements](Sources/Flow/Flow.docc/CoreElements.md)**
-- **[Practical Guide](Sources/Flow/Flow.docc/PracticalGuide.md)**
-- **[Middleware](Sources/Flow/Flow.docc/Middleware.md)**
+📖 **[Full Documentation](https://viewfeature.github.io/Flow/)**
+
+- **[Getting Started](https://viewfeature.github.io/Flow/documentation/flow/gettingstarted/)**
+- **[Core Concepts](https://viewfeature.github.io/Flow/documentation/flow/coreconcepts/)**
+- **[Core Elements](https://viewfeature.github.io/Flow/documentation/flow/coreelements/)**
+- **[Practical Guide](https://viewfeature.github.io/Flow/documentation/flow/practicalguide/)**
+- **[Middleware](https://viewfeature.github.io/Flow/documentation/flow/middleware/)**
 
 ## Installation
 

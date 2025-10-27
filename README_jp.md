@@ -96,7 +96,9 @@ struct CounterView: View {
 
 ### 結果を返すアクション
 
-アクションは`ActionTask`を通じて結果を返せます。これにより、親子間での結果の受け渡しが可能になります。また、結果を受け取った後に@Environmentから取得したnavigatorで画面遷移することで、すべてがビューツリー内で完結します。
+アクションは`ActionTask`を通じて結果を返せます。結果の型（`ActionResult`）は各Featureで自由に定義できます。
+
+この例では、子ビューが選択結果を親に返し、親が画面遷移を処理します：
 
 ```swift
 struct ChildSelectFeature: Feature {
@@ -156,8 +158,11 @@ struct ParentView: View {
 }
 ```
 
-- 親子間での結果の受け渡しがビューツリー内で完結
-- @Environmentから取得したnavigatorで画面遷移が可能
+この実装により：
+- `ChildFeature`が`ActionResult`を通じて選択結果を親に返す
+- `ParentView`が`onSelect`コールバックで結果を受け取る
+- 親が画面遷移などの副作用を制御
+- すべてがビューツリー内で完結し、依存関係が追跡しやすい
 
 ### @Observable準拠
 

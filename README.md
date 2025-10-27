@@ -98,7 +98,9 @@ struct CounterView: View {
 
 ### Result-Returning Actions
 
-Actions can return results through `ActionTask`. This enables parent-child result passing and allows navigation with a navigator from @Environment, keeping everything within the view tree.
+Actions can return results through `ActionTask`. The result type (`ActionResult`) can be freely defined for each Feature.
+
+In this example, a child view returns a selection result to the parent, which handles navigation:
 
 ```swift
 struct ChildSelectFeature: Feature {
@@ -158,8 +160,11 @@ struct ParentView: View {
 }
 ```
 
-- Parent-child result passing stays within the view tree
-- Navigation possible with navigator from @Environment
+This implementation provides:
+- `ChildFeature` returns selection results to the parent via `ActionResult`
+- `ParentView` receives results through the `onSelect` callback
+- Parent controls side effects like navigation
+- Everything stays within the view tree, making dependencies easy to track
 
 ### @Observable Support
 

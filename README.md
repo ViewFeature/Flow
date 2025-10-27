@@ -6,7 +6,7 @@
 
 [日本語版](README_jp.md)
 
-A type-safe state management library for SwiftUI applications. Flow provides a unidirectional data flow architecture with full support for Swift 6 Approachable Concurrency.
+A type-safe state management library for SwiftUI applications. Flow provides a unidirectional data flow architecture and supports Swift 6 Approachable Concurrency.
 
 <p align="center">
     <img src="flow-diagram.svg" alt="Flow Architecture Diagram" />

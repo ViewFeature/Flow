@@ -200,6 +200,7 @@ public struct ActionTask<Action, State, ActionResult: Sendable> {
     /// Execute an asynchronous operation that returns a result
     case run(
       id: String,
+      name: String?,
       operation: @MainActor (State) async throws -> ActionResult,
       onError: (@MainActor (Error, State) -> Void)?,
       cancelInFlight: Bool,
@@ -285,8 +286,8 @@ extension ActionTask {
   ///   return .created(id: outcome.id)
   /// }
   ///
-  /// // Make it cancellable with ID
-  /// return .run { state in
+  /// // Named task for better debugging
+  /// return .run(name: "🔄 Fetch user data") { state in
   ///   let data = try await fetch()
   ///   state.data = data
   ///   return .fetched
@@ -294,15 +295,19 @@ extension ActionTask {
   /// .cancellable(id: "fetch", cancelInFlight: true)
   /// ```
   ///
-  /// - Parameter operation: The async operation to execute, receiving mutable state and returning a result
+  /// - Parameters:
+  ///   - name: Optional human-readable name for the task (useful for debugging and profiling)
+  ///   - operation: The async operation to execute, receiving mutable state and returning a result
   /// - Returns: A new `ActionTask` that will execute the operation
   public static func run(
+    name: String? = nil,
     operation: @escaping @MainActor (State) async throws -> ActionResult
   ) -> ActionTask {
     let taskId = TaskIdGenerator.generate()
     return ActionTask(
       operation: .run(
         id: taskId,
+        name: name,
         operation: operation,
         onError: nil,
         cancelInFlight: false,
@@ -542,10 +547,11 @@ extension ActionTask {
   /// - Returns: A new `ActionTask` with the error handler attached
   public func `catch`(_ handler: @escaping @MainActor (Error, State) -> Void) -> ActionTask {
     switch operation {
-    case .run(let id, let op, _, let cancelInFlight, let priority):
+    case .run(let id, let name, let op, _, let cancelInFlight, let priority):
       return ActionTask(
         operation: .run(
           id: id,
+          name: name,
           operation: op,
           onError: handler,
           cancelInFlight: cancelInFlight,
@@ -590,11 +596,12 @@ extension ActionTask {
     cancelInFlight: Bool = false
   ) -> ActionTask {
     switch operation {
-    case .run(_, let op, let onError, _, let priority):
+    case .run(_, let name, let op, let onError, _, let priority):
       let stringId = id.taskIdString
       return ActionTask(
         operation: .run(
           id: stringId,
+          name: name,
           operation: op,
           onError: onError,
           cancelInFlight: cancelInFlight,
@@ -641,10 +648,11 @@ extension ActionTask {
   /// - Returns: A new `ActionTask` with the specified priority
   public func priority(_ priority: TaskPriority) -> ActionTask {
     switch operation {
-    case .run(let id, let op, let onError, let cancelInFlight, _):
+    case .run(let id, let name, let op, let onError, let cancelInFlight, _):
       return ActionTask(
         operation: .run(
           id: id,
+          name: name,
           operation: op,
           onError: onError,
           cancelInFlight: cancelInFlight,

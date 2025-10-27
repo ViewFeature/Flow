@@ -114,6 +114,7 @@ public final class TaskManager {
   ///
   /// - Parameters:
   ///   - id: Unique identifier for the task (string representation)
+  ///   - name: Optional human-readable name for the task (useful for debugging and profiling)
   ///   - operation: The asynchronous operation to execute
   ///   - onError: Optional error handler called if the operation throws
   ///   - priority: Optional task priority (defaults to nil, using system default)
@@ -123,6 +124,7 @@ public final class TaskManager {
   /// ```swift
   /// let task = taskManager.executeTask(
   ///   id: "loadProfile",
+  ///   name: "🔄 Load user profile",
   ///   operation: {
   ///     let profile = try await api.fetchProfile()
   ///     await store.send(.profileLoaded(profile))
@@ -140,6 +142,7 @@ public final class TaskManager {
   @discardableResult
   public func executeTask(
     id: String,
+    name: String? = nil,
     operation: @escaping () async throws -> Void,
     onError: ((Error) async -> Void)?,
     priority: TaskPriority? = nil
@@ -152,7 +155,7 @@ public final class TaskManager {
 
     // Use [weak self] to prevent retain cycle (TaskManager ← runningTasks ← Task)
     // Ensures deinit runs when Store deallocates, cancelling all tasks
-    let task = Task(priority: priority) { @MainActor [weak self] in
+    let task = Task(name: name, priority: priority) { @MainActor [weak self] in
       guard let self else { return }
 
       // Defer ensures cleanup happens exactly once, regardless of how the task completes

@@ -33,7 +33,7 @@ import Testing
 
     // THEN: Should have high priority
     switch result.operation {
-    case .run(_, _, _, _, let priority):
+    case .run(_, _, _, _, _, let priority):
       #expect(priority == .high)
     default:
       Issue.record("Expected run task")
@@ -51,7 +51,7 @@ import Testing
 
     // THEN: Should have low priority
     switch result.operation {
-    case .run(_, _, _, _, let priority):
+    case .run(_, _, _, _, _, let priority):
       #expect(priority == .low)
     default:
       Issue.record("Expected run task")
@@ -69,7 +69,7 @@ import Testing
 
     // THEN: Should have background priority
     switch result.operation {
-    case .run(_, _, _, _, let priority):
+    case .run(_, _, _, _, _, let priority):
       #expect(priority == .background)
     default:
       Issue.record("Expected run task")
@@ -87,7 +87,7 @@ import Testing
 
     // THEN: Should have userInitiated priority
     switch result.operation {
-    case .run(_, _, _, _, let priority):
+    case .run(_, _, _, _, _, let priority):
       #expect(priority == .userInitiated)
     default:
       Issue.record("Expected run task")
@@ -102,7 +102,7 @@ import Testing
 
     // THEN: Priority should be nil (system default)
     switch sut.operation {
-    case .run(_, _, _, _, let priority):
+    case .run(_, _, _, _, _, let priority):
       #expect(priority == nil)
     default:
       Issue.record("Expected run task")
@@ -125,7 +125,7 @@ import Testing
 
     // THEN: Should have both priority and cancellable ID
     switch result.operation {
-    case .run(let id, _, _, let cancelInFlight, let priority):
+    case .run(let id, _, _, _, let cancelInFlight, let priority):
       #expect(id == "test-task")
       #expect(cancelInFlight == true)
       #expect(priority == .high)
@@ -150,7 +150,7 @@ import Testing
 
     // THEN: Should have both priority and error handler
     switch result.operation {
-    case .run(_, _, let onError, _, let priority):
+    case .run(_, _, _, let onError, _, let priority):
       #expect(priority == .userInitiated)
       #expect(onError != nil)
     default:
@@ -175,7 +175,7 @@ import Testing
 
     // THEN: Should preserve all configurations
     switch result.operation {
-    case .run(let id, _, let onError, let cancelInFlight, let priority):
+    case .run(let id, _, _, let onError, let cancelInFlight, let priority):
       #expect(id == "full-chain")
       #expect(cancelInFlight == false)
       #expect(priority == .high)
@@ -202,7 +202,7 @@ import Testing
 
     // THEN: Should preserve all configurations regardless of order
     switch result.operation {
-    case .run(let id, _, let onError, _, let priority):
+    case .run(let id, _, _, let onError, _, let priority):
       #expect(id == "order-test")
       #expect(priority == .low)
       #expect(onError != nil)
@@ -225,7 +225,7 @@ import Testing
 
     // THEN: Should have the new priority
     switch result.operation {
-    case .run(_, _, _, _, let priority):
+    case .run(_, _, _, _, _, let priority):
       #expect(priority == .low)
     default:
       Issue.record("Expected run task")

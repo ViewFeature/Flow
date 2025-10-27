@@ -72,7 +72,7 @@ import Testing
 
     // THEN: Should have run storeTask with correct ID
     switch sut.operation {
-    case .run(let id, _, _, _, _):
+    case .run(let id, _, _, _, _, _):
       #expect(id == taskId)
     default:
       Issue.record("Expected run task, got different type")
@@ -85,7 +85,7 @@ import Testing
 
     // THEN: Should have run storeTask with auto-generated ID
     switch sut.operation {
-    case .run(let id, _, _, _, _):
+    case .run(let id, _, _, _, _, _):
       #expect(id.hasPrefix("auto-task-"), "ID should have auto-task prefix")
       #expect(id.count > "auto-task-".count, "ID should have unique suffix")
     default:
@@ -102,11 +102,11 @@ import Testing
     var id1: String?
     var id2: String?
 
-    if case .run(let id, _, _, _, _) = task1.operation {
+    if case .run(let id, _, _, _, _, _) = task1.operation {
       id1 = id
     }
 
-    if case .run(let id, _, _, _, _) = task2.operation {
+    if case .run(let id, _, _, _, _, _) = task2.operation {
       id2 = id
     }
 
@@ -147,7 +147,7 @@ import Testing
 
     // THEN: Should accept and store the long ID
     switch sut.operation {
-    case .run(let id, _, _, _, _):
+    case .run(let id, _, _, _, _, _):
       #expect(id == longId)
       #expect(id.count == 1000)
     default:
@@ -165,7 +165,7 @@ import Testing
 
     // THEN: Should accept and store the ID with special characters
     switch sut.operation {
-    case .run(let id, _, _, _, _):
+    case .run(let id, _, _, _, _, _):
       #expect(id == specialId)
     default:
       Issue.record("Expected run task")
@@ -333,7 +333,7 @@ import Testing
 
     // THEN: Should have run task with error handler
     switch result.operation {
-    case .run(let id, _, let onError, _, _):
+    case .run(let id, _, _, let onError, _, _):
       #expect(id == "test")
       #expect(onError != nil, "Error handler should be attached")
     default:
@@ -350,7 +350,7 @@ import Testing
 
     // THEN: Should preserve auto-generated ID and attach handler
     switch result.operation {
-    case .run(let id, _, let onError, _, _):
+    case .run(let id, _, _, let onError, _, _):
       #expect(id.hasPrefix("auto-task-"), "Should preserve auto-generated ID")
       #expect(onError != nil, "Error handler should be attached")
     default:
@@ -371,7 +371,7 @@ import Testing
 
     // THEN: Should have the last error handler
     switch result.operation {
-    case .run(_, _, let onError, _, _):
+    case .run(_, _, _, let onError, _, _):
       #expect(onError != nil, "Should have error handler")
     // Note: Can't easily test which handler is attached in unit test
     // This is tested in integration tests
@@ -391,7 +391,7 @@ import Testing
 
     // THEN: Should preserve the original task ID
     switch result.operation {
-    case .run(let id, _, _, _, _):
+    case .run(let id, _, _, _, _, _):
       #expect(id == originalId, "Task ID should be preserved")
     default:
       Issue.record("Expected run task")
@@ -411,7 +411,7 @@ import Testing
 
     // THEN: Should successfully attach the handler
     switch result.operation {
-    case .run(let id, _, let onError, _, _):
+    case .run(let id, _, _, let onError, _, _):
       #expect(id == "test")
       #expect(onError != nil)
     default:
@@ -539,6 +539,96 @@ import Testing
       #expect(ids == ["task-1", "task-2", "task-1", "task-3"])
     default:
       Issue.record("Expected cancels task, got different type")
+    }
+  }
+
+  // MARK: - Task Naming
+
+  @Test func run_withName() {
+    // GIVEN: A run task with a name
+    let sut: ActionTask<TestAction, TestState, Void> = .run(name: "Fetch user data") { _ in }
+
+    // THEN: Should have the specified name
+    switch sut.operation {
+    case .run(_, let name, _, _, _, _):
+      #expect(name == "Fetch user data")
+    default:
+      Issue.record("Expected run task")
+    }
+  }
+
+  @Test func run_withoutName() {
+    // GIVEN: A run task without a name (backward compatibility)
+    let sut: ActionTask<TestAction, TestState, Void> = .run { _ in }
+
+    // THEN: Should have nil name
+    switch sut.operation {
+    case .run(_, let name, _, _, _, _):
+      #expect(name == nil)
+    default:
+      Issue.record("Expected run task")
+    }
+  }
+
+  @Test func run_namePreservedAfterCatch() {
+    // GIVEN: A named run task with error handler
+    let sut: ActionTask<TestAction, TestState, Void> = .run(name: "Load profile") { _ in }
+      .catch { _, _ in }
+
+    // THEN: Should preserve the name
+    switch sut.operation {
+    case .run(_, let name, _, _, _, _):
+      #expect(name == "Load profile")
+    default:
+      Issue.record("Expected run task")
+    }
+  }
+
+  @Test func run_namePreservedAfterCancellable() {
+    // GIVEN: A named run task made cancellable
+    let sut: ActionTask<TestAction, TestState, Void> = .run(name: "Fetch data") { _ in }
+      .cancellable(id: "fetch")
+
+    // THEN: Should preserve the name
+    switch sut.operation {
+    case .run(_, let name, _, _, _, _):
+      #expect(name == "Fetch data")
+    default:
+      Issue.record("Expected run task")
+    }
+  }
+
+  @Test func run_namePreservedAfterPriority() {
+    // GIVEN: A named run task with priority
+    let sut: ActionTask<TestAction, TestState, Void> = .run(name: "Critical operation") { _ in }
+      .priority(.high)
+
+    // THEN: Should preserve the name
+    switch sut.operation {
+    case .run(_, let name, _, _, _, _):
+      #expect(name == "Critical operation")
+    default:
+      Issue.record("Expected run task")
+    }
+  }
+
+  @Test func run_namePreservedThroughChaining() {
+    // GIVEN: A named run task with all configurations
+    let sut: ActionTask<TestAction, TestState, Void> = .run(name: "🔄 Load user") { _ in }
+      .cancellable(id: "load", cancelInFlight: true)
+      .priority(.userInitiated)
+      .catch { _, _ in }
+
+    // THEN: Should preserve the name through all chaining
+    switch sut.operation {
+    case .run(let id, let name, _, let onError, let cancelInFlight, let priority):
+      #expect(name == "🔄 Load user")
+      #expect(id == "load")
+      #expect(cancelInFlight == true)
+      #expect(priority == .userInitiated)
+      #expect(onError != nil)
+    default:
+      Issue.record("Expected run task")
     }
   }
 }

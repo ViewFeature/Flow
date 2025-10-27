@@ -122,7 +122,7 @@ import Testing
 
     // THEN: Should return run task
     #expect(state.isLoading)
-    if case .run(let id, _, _, _, _) = task.operation {
+    if case .run(let id, _, _, _, _, _) = task.operation {
       #expect(id == "test-task")
     } else {
       Issue.record("Expected run task")
@@ -282,7 +282,7 @@ import Testing
 
     // THEN: Task should be transformed
     #expect(state.count == 1)
-    if case .run(let id, _, _, _, _) = task.operation {
+    if case .run(let id, _, _, _, _, _) = task.operation {
       #expect(id == "transformed")
     } else {
       Issue.record("Expected run task")
@@ -297,7 +297,7 @@ import Testing
     }
     .transform { task in
       switch task.operation {
-      case .run(let id, _, _, _, _):
+      case .run(let id, _, _, _, _, _):
         return .cancel(id: id)
       default:
         return task
@@ -398,7 +398,7 @@ import Testing
     #expect(state.count == 15)
     #expect(middlewareExecuted)
     #expect(state.errorMessage == nil)
-    if case .run(let id, _, _, _, _) = task.operation {
+    if case .run(let id, _, _, _, _, _) = task.operation {
       #expect(id == "main-task")
     }
   }

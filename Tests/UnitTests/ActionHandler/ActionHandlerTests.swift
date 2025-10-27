@@ -109,7 +109,7 @@ import Testing
 
     // THEN: Should return run task
     #expect(state.isLoading)
-    if case .run(let id, _, _, _, _) = task.operation {
+    if case .run(let id, _, _, _, _, _) = task.operation {
       #expect(id == "test")
     } else {
       Issue.record("Expected run task")
@@ -286,7 +286,7 @@ import Testing
 
     // THEN: Task should be transformed
     #expect(state.count == 1)
-    if case .run(let id, _, _, _, _) = task.operation {
+    if case .run(let id, _, _, _, _, _) = task.operation {
       #expect(id == "transformed")
     } else {
       Issue.record("Expected run task")
@@ -301,7 +301,7 @@ import Testing
     }
     .transform { task in
       switch task.operation {
-      case .run(let id, _, _, _, _):
+      case .run(let id, _, _, _, _, _):
         return .cancel(id: id)
       default:
         return task
@@ -466,7 +466,7 @@ import Testing
 
     let task = await sut.handle(action: .asyncOp, state: state)
     #expect(state.isLoading)
-    if case .run(let id, _, _, _, _) = task.operation {
+    if case .run(let id, _, _, _, _, _) = task.operation {
       #expect(id == "complex")
     }
 

@@ -32,7 +32,7 @@ import Testing
 
     // THEN: Should have the specified ID and cancelInFlight = false
     switch sut.operation {
-    case .run(let id, _, _, let cancelInFlight, _):
+    case .run(let id, _, _, _, let cancelInFlight, _):
       #expect(id == "search")
       #expect(!cancelInFlight)
     default:
@@ -47,7 +47,7 @@ import Testing
 
     // THEN: Should have cancelInFlight = true
     switch sut.operation {
-    case .run(let id, _, _, let cancelInFlight, _):
+    case .run(let id, _, _, _, let cancelInFlight, _):
       #expect(id == "search")
       #expect(cancelInFlight)
     default:
@@ -62,7 +62,7 @@ import Testing
 
     // THEN: Should use the new ID from cancellable
     switch sut.operation {
-    case .run(let id, _, _, _, _):
+    case .run(let id, _, _, _, _, _):
       #expect(id == "new-id")
     default:
       Issue.record("Expected run task")
@@ -105,7 +105,7 @@ import Testing
 
     // THEN: Should have both ID, cancelInFlight, and error handler
     switch sut.operation {
-    case .run(let id, _, let onError, let cancelInFlight, _):
+    case .run(let id, _, _, let onError, let cancelInFlight, _):
       #expect(id == "search")
       #expect(cancelInFlight)
       #expect(onError != nil)
@@ -122,7 +122,7 @@ import Testing
 
     // THEN: Should preserve error handler and set cancellable
     switch sut.operation {
-    case .run(let id, _, let onError, let cancelInFlight, _):
+    case .run(let id, _, _, let onError, let cancelInFlight, _):
       #expect(id == "search")
       #expect(cancelInFlight)
       #expect(onError != nil)
@@ -138,7 +138,7 @@ import Testing
 
     // THEN: Should convert Int to String
     switch sut.operation {
-    case .run(let id, _, _, let cancelInFlight, _):
+    case .run(let id, _, _, _, let cancelInFlight, _):
       #expect(id == "42")
       #expect(cancelInFlight)
     default:
@@ -154,7 +154,7 @@ import Testing
 
     // THEN: Should convert UUID to String
     switch sut.operation {
-    case .run(let id, _, _, let cancelInFlight, _):
+    case .run(let id, _, _, _, let cancelInFlight, _):
       #expect(id == uuid.uuidString)
       #expect(cancelInFlight)
     default:
@@ -174,7 +174,7 @@ import Testing
 
     // THEN: Should use enum raw value
     switch sut.operation {
-    case .run(let id, _, _, let cancelInFlight, _):
+    case .run(let id, _, _, _, let cancelInFlight, _):
       #expect(id == "search")
       #expect(cancelInFlight)
     default:
@@ -189,7 +189,7 @@ import Testing
 
     // THEN: cancelInFlight should default to false
     switch sut.operation {
-    case .run(_, _, _, let cancelInFlight, _):
+    case .run(_, _, _, _, let cancelInFlight, _):
       #expect(!cancelInFlight)
     default:
       Issue.record("Expected run task")
@@ -204,7 +204,7 @@ import Testing
 
     // THEN: Last call should override
     switch sut.operation {
-    case .run(let id, _, _, let cancelInFlight, _):
+    case .run(let id, _, _, _, let cancelInFlight, _):
       #expect(id == "second")
       #expect(cancelInFlight)
     default:

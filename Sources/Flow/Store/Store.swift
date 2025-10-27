@@ -204,8 +204,10 @@ public final class Store<F: Feature> {
   ///
   /// This helper method handles the complexity of executing async operations,
   /// managing task cancellation, and error handling.
+  // swiftlint:disable:next function_parameter_count
   private func executeRunTask(
     id: String,
+    name: String?,
     operation: @escaping @MainActor (F.State) async throws -> F.ActionResult,
     onError: (@MainActor (Error, F.State) -> Void)?,
     cancelInFlight: Bool,
@@ -220,6 +222,7 @@ public final class Store<F: Feature> {
 
     let runningTask = taskManager.executeTask(
       id: id,
+      name: name,
       operation: { @MainActor [weak self] in
         guard let self else {
           throw StoreError.deallocated
@@ -310,9 +313,10 @@ public final class Store<F: Feature> {
     case .just(let result):
       return result
 
-    case .run(let id, let operation, let onError, let cancelInFlight, let priority):
+    case .run(let id, let name, let operation, let onError, let cancelInFlight, let priority):
       return try await executeRunTask(
         id: id,
+        name: name,
         operation: operation,
         onError: onError,
         cancelInFlight: cancelInFlight,

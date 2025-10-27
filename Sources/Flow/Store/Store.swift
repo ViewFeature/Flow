@@ -204,6 +204,7 @@ public final class Store<F: Feature> {
   ///
   /// This helper method handles the complexity of executing async operations,
   /// managing task cancellation, and error handling.
+  // swiftlint:disable:next function_parameter_count
   private func executeRunTask(
     id: String,
     name: String?,

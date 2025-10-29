@@ -8,7 +8,7 @@ final class LocationService: NSObject {
   private let manager = CLLocationManager()
   private var continuation: AsyncStream<Result<CLLocation, Error>>.Continuation?
 
-  nonisolated override init() {
+  override nonisolated init() {
     super.init()
     Task { @MainActor in
       self.manager.delegate = self

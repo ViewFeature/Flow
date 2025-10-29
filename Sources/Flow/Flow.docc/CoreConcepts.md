@@ -8,7 +8,7 @@ This guide explains Flow's design philosophy and key features. You'll learn abou
 
 ## Unidirectional Data Flow
 
-Flow adopts unidirectional data flow. All state changes occur through actions, making it easy to track how state evolves.
+Flow adopts unidirectional data flow. All state changes occur through actions, allowing you to track how state evolves.
 
 ![Flow Architecture Diagram](flow-diagram.svg)
 
@@ -47,12 +47,12 @@ struct CounterView: View {
 }
 ```
 
-- State scope is clear (same lifecycle as the view)
-- No need to manage global state
+- State scope matches the view lifecycle
+- Reduces the need to manage global state
 
 ### Result-Returning Actions
 
-Actions can return results through `ActionTask`. The result type (`ActionResult`) can be freely defined for each Feature.
+Actions can return results through `ActionTask`. The result type (`ActionResult`) can be defined for each Feature.
 
 In this example, a child view returns a selection result to the parent, which handles navigation:
 
@@ -121,7 +121,7 @@ This implementation provides:
 - `ChildFeature` returns selection results to the parent via `ActionResult`
 - `ParentView` receives results through the `onSelect` callback
 - Parent controls side effects like navigation
-- Everything stays within the view tree, making dependencies easy to track
+- Everything stays within the view tree, allowing dependencies to be tracked
 
 See <doc:PracticalGuide> for more details.
 
@@ -152,7 +152,7 @@ A Swift 6 feature that allows setting default actor isolation for an entire modu
 .defaultIsolation(MainActor.self)
 ```
 
-This ensures all operations run on the MainActor, with **data races caught at compile time**. A data race occurs when multiple threads access the same memory simultaneously and at least one performs a write.
+This ensures all operations run on the MainActor, with **compile-time data race detection**. A data race occurs when multiple threads access the same memory simultaneously and at least one performs a write.
 
 ```swift
 import Flow
@@ -174,7 +174,7 @@ func handle() -> ActionHandler<Action, State, Void> {
 }
 ```
 
-- Thread-safety guaranteed
+- Provides thread-safety
 - Native `async/await` support
 
 ### Observable Actions
@@ -202,7 +202,7 @@ func handle() -> ActionHandler<Action, State, Void> {
 }
 ```
 
-- Observe all actions in one place
+- Observe actions in one place
 - Use for logging, analytics, and debugging
 
 ## Next Steps

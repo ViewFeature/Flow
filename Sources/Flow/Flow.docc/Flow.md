@@ -1,6 +1,6 @@
 # ``Flow``
 
-A library for managing state in SwiftUI applications in a type-safe way. Flow provides a unidirectional data flow architecture with full support for Swift 6 Approachable Concurrency.
+A library for managing state in SwiftUI applications in a type-safe way. Flow provides a unidirectional data flow architecture and supports Swift 6 Approachable Concurrency.
 
 ## Key Features
 

@@ -474,30 +474,43 @@ extension ActionTask {
   /// - Parameter tasks: Variadic list of tasks to concatenate
   /// - Returns: A single task that runs all tasks sequentially and returns the last meaningful result
   public static func concatenate(_ tasks: ActionTask...) -> ActionTask {
-    concatenate(tasks)
+    // Variadic guarantees at least one element at call site
+    // Safe to force try because tasks cannot be empty
+    // swiftlint:disable:next force_try
+    try! concatenate(tasks)
   }
 
   /// Concatenates an array of tasks to run sequentially.
   ///
-  /// This is the array version of the variadic `concatenate` method.
-  /// Useful when you have a dynamic number of tasks.
+  /// Throws `FlowError.noTasksToExecute` if the task array is empty.
+  /// This strict behavior helps catch logic errors early.
   ///
-  /// ## Example
+  /// ## Example: Dynamic Tasks with Guard
   /// ```swift
-  /// // Process items one by one
-  /// let processTasks = items.map { item in
-  ///     ActionTask.run { state in
-  ///         state.processed.append(try await process(item))
-  ///     }
+  /// let tasks = items.map { item in
+  ///   ActionTask.run { state in try await process(item) }
   /// }
-  /// return .concatenate(processTasks)
+  ///
+  /// // Explicit handling of empty case
+  /// guard !tasks.isEmpty else {
+  ///   return .none  // Empty is intentional
+  /// }
+  ///
+  /// return try .concatenate(tasks)
   /// ```
   ///
-  /// - Parameter tasks: Array of tasks to concatenate
+  /// ## Example: Propagating Error
+  /// ```swift
+  /// // Let the error propagate if empty is unexpected
+  /// return try .concatenate(tasks)  // May throw
+  /// ```
+  ///
+  /// - Parameter tasks: Array of tasks to concatenate (must not be empty)
   /// - Returns: A single task that runs all tasks sequentially
-  public static func concatenate(_ tasks: [ActionTask]) -> ActionTask {
+  /// - Throws: `FlowError.noTasksToExecute` if tasks array is empty
+  public static func concatenate(_ tasks: [ActionTask]) throws -> ActionTask {
     guard let first = tasks.first else {
-      fatalError("concatenate requires at least one task")
+      throw FlowError.noTasksToExecute(context: "concatenate(_:)")
     }
     // TCA-style reduce pattern implementing Monoid
     return tasks.dropFirst().reduce(first) { $0.concatenate(with: $1) }

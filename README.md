@@ -241,7 +241,7 @@ func handle() -> ActionHandler<Action, State, Void> {
 
 ## Documentation
 
-📖 **[Full Documentation](https://viewfeature.github.io/Flow/)**
+📖 **[Full Documentation](https://viewfeature.github.io/Flow/documentation/flow/)** — Comprehensive guides with improved clarity (v1.2.0)
 
 - **[Getting Started](https://viewfeature.github.io/Flow/documentation/flow/gettingstarted/)**
 - **[Core Concepts](https://viewfeature.github.io/Flow/documentation/flow/coreconcepts/)**
@@ -257,7 +257,7 @@ Add Flow to your `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/ViewFeature/Flow.git", from: "1.1.1")
+    .package(url: "https://github.com/ViewFeature/Flow.git", from: "1.2.0")
 ],
 targets: [
     .target(
@@ -276,7 +276,7 @@ targets: [
 
 - Select **File → Add Package Dependencies**
 - Enter the URL: `https://github.com/ViewFeature/Flow.git`
-- Select version: `1.1.1` or later
+- Select version: `1.2.0` or later
 
 **Recommended**: Add `-default-isolation MainActor` to your target's **Build Settings → Other Swift Flags**.
 

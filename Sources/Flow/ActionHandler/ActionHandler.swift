@@ -1,5 +1,34 @@
 import Foundation
 
+/// Action execution closure that mutates state and returns a task.
+///
+/// This typealias defines the signature for action processing logic used in ``ActionHandler``.
+/// The closure receives an action and state, performs any necessary state mutations,
+/// and returns an ``ActionTask`` for asynchronous side effects.
+///
+/// All execution occurs on the **MainActor**, ensuring thread-safe state mutations.
+///
+/// ## Example
+/// ```swift
+/// let execution: ActionExecution<MyAction, MyState, Void> = { action, state in
+///   switch action {
+///   case .increment:
+///     state.count += 1
+///     return .none
+///   }
+/// }
+/// ```
+///
+/// ## Type Parameters
+/// - `Action`: The action type to process (must be Sendable)
+/// - `State`: The state type to mutate (must be AnyObject/reference type)
+/// - `ActionResult`: The result type returned from action processing (must be Sendable)
+///
+/// ## See Also
+/// - ``ActionHandler/init(_:)``
+public typealias ActionExecution<Action, State, ActionResult> =
+  @MainActor (Action, State) async -> ActionTask<Action, State, ActionResult>
+
 /// A facade for action processing with fluent method chaining capabilities that can return typed results.
 ///
 /// `ActionHandler` provides a clean, composable API for defining how your feature

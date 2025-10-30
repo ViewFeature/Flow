@@ -14,6 +14,16 @@ Flow consists of five core elements:
 
 These elements work together to build applications.
 
+## Quick Reference
+
+| Element | Purpose | Key APIs |
+|---------|---------|----------|
+| **Store** | Manages state and coordinates actions | `send()`, `state` property |
+| **Feature** | Groups State, Actions, and Handler | `State`, `Action`, `handle()` |
+| **ActionHandler** | Processes actions and returns tasks | Returns `ActionTask<Action, State, ActionResult>` |
+| **ActionResult** | Defines the result type of actions | `Void` or custom type |
+| **ActionTask** | Manages async execution | `.none`, `.run`, `.just`, `.cancel`, `.concatenate` |
+
 ## Store
 
 **Store** manages state, receives actions from views, sends them to handlers, and processes results.

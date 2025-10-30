@@ -164,7 +164,16 @@ Type parameters:
 
 **Return results from synchronous processing:**
 
-Use `.just()` to return results immediately.
+Use `.just()` to return results immediately without async work.
+
+`.just()` is similar to `.none`, but returns a custom result value:
+- **`.none`** - Returns `Void` (no result)
+- **`.just(result)`** - Returns a specific result value
+
+Common uses:
+- Validation results
+- Calculations based on current state
+- Cache hits or default values
 
 ```swift
 ActionHandler { action, state in

@@ -1,7 +1,9 @@
 import Foundation
 
 /// Action execution closure that mutates state and returns a task.
-public typealias ActionExecution<Action, State, ActionResult> =
+///
+/// - Note: Type constraints match Feature protocol requirements to ensure consistency.
+public typealias ActionExecution<Action: Sendable, State: AnyObject, ActionResult: Sendable> =
   @MainActor (Action, State) async ->
   ActionTask<Action, State, ActionResult>
 
@@ -25,7 +27,12 @@ public typealias StateErrorHandler<State> = (Error, State) -> Void
 /// .use(LoggingMiddleware())
 /// .onError { error, state in state.errorMessage = "\(error)" }
 /// ```
-public final class ActionProcessor<Action, State, ActionResult: Sendable> {
+///
+/// - Note: Type constraints match Feature protocol requirements:
+///   - `Action: Sendable` for safe concurrency across tasks
+///   - `State: AnyObject` ensures reference semantics for state mutation
+///   - `ActionResult: Sendable` for safe concurrency of operation results
+public final class ActionProcessor<Action: Sendable, State: AnyObject, ActionResult: Sendable> {
   private let baseExecution: ActionExecution<Action, State, ActionResult>
   private let errorHandler: StateErrorHandler<State>?
   private let middlewareManager: MiddlewareManager<Action, State>

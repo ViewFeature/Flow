@@ -154,7 +154,18 @@ func handle() -> ActionHandler<Action, State, Void> {
 
 ## Task Priority
 
-Set task priority to execute important operations first.
+Set task priority to control how the system schedules async operations.
+
+**Priority levels:**
+
+| Priority | When to Use | Example Use Cases |
+|----------|-------------|-------------------|
+| `.high` | User is actively waiting for results | Critical data loading, search results |
+| `.userInitiated` | User-triggered operations | Button actions, form submissions |
+| `.utility` | Improve UX but not urgent | Prefetching, caching next page |
+| `.background` | Can run anytime | Analytics uploads, logs, cleanup |
+
+**Example:**
 
 ```swift
 import Flow
@@ -163,7 +174,7 @@ func handle() -> ActionHandler<Action, State, Void> {
     ActionHandler { action, state in
         switch action {
         case .loadCriticalData:
-            // Critical data loading that users are waiting for
+            // User is waiting for this data
             return .run { state in
                 let data = try await api.fetchCriticalData()
                 state.data = data
@@ -171,32 +182,18 @@ func handle() -> ActionHandler<Action, State, Void> {
             .priority(.high)
 
         case .uploadAnalytics:
-            // Analytics data upload in background
+            // Background task, can run anytime
             return .run { state in
                 try await analytics.upload(state.events)
                 state.events.removeAll()
             }
             .priority(.background)
-
-        case .loadUserProfile:
-            // User-initiated operation
-            return .run { state in
-                let profile = try await api.fetchProfile()
-                state.profile = profile
-            }
-            .priority(.userInitiated)
-
-        case .prefetchNextPage:
-            // Utility operation (prefetch cache, etc.)
-            return .run { state in
-                let nextPage = try await api.fetchNextPage()
-                state.cachedPages.append(nextPage)
-            }
-            .priority(.utility)
         }
     }
 }
 ```
+
+> Note: Priority affects scheduling but doesn't guarantee execution order. Use `.concatenate` when strict ordering is required.
 
 ## Method Chaining
 

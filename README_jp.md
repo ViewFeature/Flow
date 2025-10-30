@@ -256,7 +256,7 @@ func handle() -> ActionHandler<Action, State, Void> {
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/ViewFeature/Flow.git", from: "1.1.0")
+    .package(url: "https://github.com/ViewFeature/Flow.git", from: "1.1.1")
 ],
 targets: [
     .target(
@@ -275,7 +275,7 @@ targets: [
 
 - **File → Add Package Dependencies**を選択
 - 以下のURLを入力：`https://github.com/ViewFeature/Flow.git`
-- バージョンを選択：`1.1.0`以降
+- バージョンを選択：`1.1.1`以降
 
 **推奨**: ターゲットの**Build Settings → Other Swift Flags**に`-default-isolation MainActor`を追加してください。
 

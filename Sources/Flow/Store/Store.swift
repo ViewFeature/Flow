@@ -158,21 +158,42 @@ public final class Store<F: Feature> {
   /// }
   /// ```
   ///
-  /// ## Sequential Processing
-  /// Actions are processed **sequentially** on the MainActor. If an action returns
-  /// a `.run` task, the Store will await its completion before processing the next action.
+  /// ## MainActor Execution and Task Ordering
+  /// All actions and state mutations execute on the **MainActor**, ensuring thread-safe
+  /// state access. However, the order in which multiple `send()` calls are executed
+  /// is **not guaranteed** when called without `await`.
   ///
+  /// This is because Swift actors (including MainActor) do not guarantee FIFO ordering
+  /// of queued tasks. The Swift runtime uses priority-based scheduling, which may
+  /// reorder tasks based on their priority to avoid priority inversions.
+  ///
+  /// - Note: See [SE-0306: Actors](https://github.com/apple/swift-evolution/blob/main/proposals/0306-actors.md)
+  ///   for details on actor execution semantics. The proposal explicitly states:
+  ///   "Tasks awaiting an actor are not guaranteed to be run in the same order they
+  ///   originally awaited that actor."
+  ///
+  /// - Warning: Multiple fire-and-forget `send()` calls may execute in a different order
+  ///   than they were called. If you need guaranteed sequential execution, use `await`.
+  ///
+  /// ## Ensuring Sequential Execution
+  /// To guarantee action processing order, explicitly `await` each action:
   /// ```swift
-  /// store.send(.longRunningTask)  // Takes 5 seconds
-  /// store.send(.quickTask)        // Waits until longRunningTask completes
+  /// // ✅ Guaranteed sequential execution
+  /// await store.send(.startPayment).value
+  /// await store.send(.confirmPayment).value
+  /// await store.send(.notifyUser).value
   /// ```
   ///
-  /// **Why sequential?**
-  /// - Ensures state consistency (no concurrent mutations)
-  /// - Simplifies reasoning about action order
-  /// - Prevents race conditions
+  /// ## Fire-and-Forget Pattern (Order Not Guaranteed)
+  /// ```swift
+  /// // ⚠️ These may execute in any order
+  /// Button("Action 1") { store.send(.action1) }
+  /// Button("Action 2") { store.send(.action2) }
+  /// Button("Action 3") { store.send(.action3) }
+  /// ```
   ///
-  /// If you need truly concurrent background work, dispatch it inside the `.run` block:
+  /// ## Concurrent Background Work
+  /// If you need concurrent background work, dispatch it inside the `.run` block:
   /// ```swift
   /// return .run { state in
   ///   // Fire-and-forget background work
@@ -184,6 +205,14 @@ public final class Store<F: Feature> {
   /// ```
   @discardableResult
   public func send(_ action: F.Action) -> Task<Result<F.ActionResult, Error>, Never> {
+    // Each send() creates an independent Task that is enqueued to MainActor.
+    // Per SE-0306, actors do NOT guarantee FIFO ordering - the Swift runtime
+    // uses priority-based scheduling. This means multiple send() calls without
+    // await may execute in a different order than they were called.
+    //
+    // For guaranteed sequential execution, callers must explicitly await:
+    //   await store.send(.action1).value
+    //   await store.send(.action2).value
     Task { @MainActor [weak self] in
       guard let self else {
         return .failure(StoreError.deallocated)
@@ -258,10 +287,13 @@ public final class Store<F: Feature> {
     return result
   }
 
-  /// Processes an action sequentially with cancellation support.
+  /// Processes a single action with cancellation support.
   ///
   /// This method checks for task cancellation at key points to ensure
   /// cancellation propagates through the action processing pipeline.
+  ///
+  /// Note: This processes ONE action. Multiple actions may be processed
+  /// concurrently if multiple send() calls are made without await.
   private func processAction(_ action: F.Action) async throws -> F.ActionResult {
     // Check if the parent task was cancelled before starting
     guard !Task.isCancelled else {

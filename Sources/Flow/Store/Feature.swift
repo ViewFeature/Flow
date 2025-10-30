@@ -232,6 +232,11 @@ public protocol Feature: Sendable {
   /// ensuring thread-safe UI updates. It returns a ``ActionTask`` to handle
   /// any asynchronous side effects.
   ///
+  /// - Note: The `handle()` method is called **once** during Store initialization.
+  ///   The returned ``ActionHandler`` instance is reused for all subsequent actions.
+  ///   Do not call `handle()` multiple times or store it separately - let the Store
+  ///   manage the ActionHandler lifecycle.
+  ///
   /// ## Example
   /// ```swift
   /// func handle() -> ActionHandler<Action, State, ActionResult> {

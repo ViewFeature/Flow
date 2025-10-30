@@ -14,9 +14,28 @@ Flow consists of five core elements:
 
 These elements work together to build applications.
 
+## Quick Reference
+
+| Element | Purpose | Key APIs |
+|---------|---------|----------|
+| **Store** | Manages state and coordinates actions | `send()`, `state` property |
+| **Feature** | Groups State, Actions, and Handler | `State`, `Action`, `handle()` |
+| **ActionHandler** | Processes actions and returns tasks | Returns `ActionTask<Action, State, ActionResult>` |
+| **ActionResult** | Defines the result type of actions | `Void` or custom type |
+| **ActionTask** | Manages async execution | `.none`, `.run`, `.just`, `.cancel`, `.concatenate` |
+
 ## Store
 
 **Store** manages state, receives actions from views, sends them to handlers, and processes results.
+
+**Key responsibilities:**
+- Holds the current state
+- Receives actions from views via `send()`
+- Coordinates with ActionHandler to process actions
+- Returns `ActionTask` for async result handling
+
+**Why use `@State`?**
+Store is held with `@State` to tie its lifecycle to the view. When the view appears, the store initializes; when dismissed, it cleans up automatically.
 
 ```swift
 import SwiftUI
@@ -37,9 +56,29 @@ var body: some View {
 }
 ```
 
+**Sending actions:**
+
+```swift
+// Fire-and-forget (common for state-only updates)
+store.send(.increment)
+
+// Handle results for navigation, validation, etc.
+Task {
+    let result = await store.send(.save).value
+    if case .success = result {
+        // Navigate or show confirmation
+    }
+}
+```
+
 ## Feature
 
-**Feature** defines State, Action, and ActionHandler in one place.
+**Feature** groups State, Actions, and ActionHandler in one place, providing a complete definition of a feature's behavior.
+
+**Why use Feature?**
+- **Cohesion** - Related logic stays together
+- **Reusability** - Easy to test and reuse across views
+- **Type safety** - State, Action, and ActionResult are strongly typed
 
 ```swift
 import Flow
@@ -58,7 +97,18 @@ struct UserFeature: Feature {
 
     func handle() -> ActionHandler<Action, State, Void> {
         ActionHandler { action, state in
-            // Business logic goes here
+            switch action {
+            case .load:
+                state.isLoading = true
+                return .run { state in
+                    let user = try await api.fetchUser()
+                    state.user = user
+                    state.isLoading = false
+                }
+            case .logout:
+                state.user = nil
+                return .none
+            }
         }
     }
 }
@@ -67,6 +117,35 @@ struct UserFeature: Feature {
 ## ActionHandler
 
 **ActionHandler** receives actions and current state, updates state, and returns an ActionTask.
+
+**How it works:**
+The handler is a closure that receives two parameters:
+- **action** - The action to process
+- **state** - The current state (mutable)
+
+You can update state directly and return a task describing any async work.
+
+**Example:**
+
+```swift
+ActionHandler<Action, State, Void> { action, state in
+    switch action {
+    case .increment:
+        state.count += 1  // Synchronous state update
+        return .none       // No async work
+
+    case .fetchData:
+        state.isLoading = true
+        return .run { state in  // Async work
+            let data = try await api.fetch()
+            state.data = data
+            state.isLoading = false
+        }
+    }
+}
+```
+
+**Generic type parameters:**
 
 ```swift
 ActionHandler<Action, State, ActionResult>
@@ -85,7 +164,16 @@ Type parameters:
 
 **Return results from synchronous processing:**
 
-Use `.just()` to return results immediately.
+Use `.just()` to return results immediately without async work.
+
+`.just()` is similar to `.none`, but returns a custom result value:
+- **`.none`** - Returns `Void` (no result)
+- **`.just(result)`** - Returns a specific result value
+
+Common uses:
+- Validation results
+- Calculations based on current state
+- Cache hits or default values
 
 ```swift
 ActionHandler { action, state in
@@ -184,6 +272,16 @@ return .just(.success)
 
 **Execute async processing**
 
+Use `.cancellable(id:cancelInFlight:)` to manage long-running tasks:
+
+**Parameters:**
+- **`id`** - Unique identifier for the task (used for cancellation)
+- **`cancelInFlight`** - Behavior when starting a new task with the same ID:
+  - `true` - Cancels the existing task before starting the new one
+  - `false` - Allows both tasks to run concurrently
+
+**Example:**
+
 ```swift
 return .run { state in
     let user = try await api.fetchUser()
@@ -191,6 +289,11 @@ return .run { state in
 }
 .cancellable(id: "load-user", cancelInFlight: true)
 ```
+
+**Task ID naming:**
+- Use descriptive names: `"search"`, `"load-user"`, `"upload-photo"`
+- Keep consistent across related actions
+- Task IDs are scoped to each Store instance
 
 **Cancel running task**
 

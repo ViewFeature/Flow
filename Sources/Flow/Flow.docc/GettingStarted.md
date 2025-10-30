@@ -46,9 +46,9 @@ dependencies: [
 
 ## Build a Counter App
 
-### Step 1
+### Step 1: Define Your Feature
 
-Create a Feature and define State, Action, and Handler.
+Create a Feature that groups **State** (data), **Actions** (events), and **ActionHandler** (logic).
 
 ```swift
 import Flow
@@ -85,9 +85,9 @@ struct CounterFeature: Feature {
 }
 ```
 
-### Step 2
+### Step 2: Create Your View
 
-Create a View and integrate the Store.
+Create a View and integrate the **Store**, which manages state and coordinates actions.
 
 ```swift
 import SwiftUI
@@ -121,6 +121,8 @@ struct CounterView: View {
 ```
 
 That's it! You've implemented the basic functionality.
+
+> **Understanding the Code**: To learn what Feature, State, Action, ActionHandler, and Store mean and how they work together, continue to <doc:CoreConcepts>.
 
 ## Next Steps
 

@@ -52,10 +52,14 @@ struct AnalyticsMiddleware: ActionMiddleware {
 
 Use `final class` with `@unchecked Sendable` when middleware needs to track state:
 
+> Warning: `@unchecked Sendable` bypasses Swift's thread-safety checks. You must ensure thread-safety manually. This is safe in Flow because all middleware operations run on the MainActor.
+
 ```swift
 import Flow
 
 final class TimingMiddleware: ActionMiddleware, @unchecked Sendable {
+    // ⚠️ @unchecked Sendable: We guarantee thread-safety because Flow ensures
+    // all middleware methods execute on MainActor with defaultIsolation
     let id = "TimingMiddleware"
     private var startTimes: [String: Date] = [:]
 
@@ -117,6 +121,39 @@ func handle() -> ActionHandler<Action, State, Void> {
 [MyFeature] ▶ Action: loadData
 [MyFeature] ✗ Error: Network error (0.145s)
 ```
+
+## Using Multiple Middleware
+
+Chain multiple middleware with `.use()` to compose cross-cutting concerns.
+
+**Example:**
+
+```swift
+import Flow
+
+func handle() -> ActionHandler<Action, State, Void> {
+    ActionHandler { action, state in
+        // Action processing logic
+    }
+    .use(LoggingMiddleware(category: "UserFeature"))
+    .use(AnalyticsMiddleware(analytics: .shared))
+    .use(ErrorReportingMiddleware(reporter: .production))
+}
+```
+
+**Execution order:**
+
+Middleware executes in the order they are added:
+
+1. **beforeAction** - Top to bottom (Logging → Analytics → Error Reporting)
+2. **Action processing** - Your handler executes
+3. **afterAction** - Bottom to top (Error Reporting → Analytics → Logging)
+4. **onError** - Top to bottom (Logging → Analytics → Error Reporting)
+
+This order ensures that:
+- Logging middleware sees all actions first
+- Error reporting catches all failures
+- Analytics tracks after processing completes
 
 ## Next Steps
 

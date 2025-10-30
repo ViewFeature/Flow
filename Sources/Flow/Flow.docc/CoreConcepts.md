@@ -54,62 +54,72 @@ struct CounterView: View {
 
 Actions can return results through `ActionTask`. The result type (`ActionResult`) can be defined for each Feature.
 
-In this example, a child view returns a selection result to the parent, which handles navigation:
+**Basic example:**
 
 ```swift
 import SwiftUI
 import Flow
 
-struct ParentView: View {
-    @Environment(\.navigator) private var navigator
-
-    var body: some View {
-        ChildView { selectedId in
-            await navigator.navigate(to: .detail(id: selectedId))
-        }
+struct LoginFeature: Feature {
+    @Observable
+    final class State {
+        var username = ""
+        var password = ""
     }
-}
 
-struct ChildView: View {
-    @State private var store = Store(
-        initialState: .init(),
-        feature: ChildFeature()
-    )
-    let onSelect: (String) async -> Void
+    enum Action: Sendable {
+        case login
+    }
 
-    var body: some View {
-        Button("Select") {
-            Task {
-                let result = await store.send(.select).value
-                if case .success(.selected(let id)) = result {
-                    await onSelect(id)
+    enum ActionResult: Sendable {
+        case success
+        case invalidCredentials
+        case networkError
+    }
+
+    func handle() -> ActionHandler<Action, State, ActionResult> {
+        ActionHandler { action, state in
+            switch action {
+            case .login:
+                if state.username.isEmpty || state.password.isEmpty {
+                    return .just(.invalidCredentials)  // Return result immediately
+                }
+                return .run { state in  // Async work with result
+                    do {
+                        try await api.login(state.username, state.password)
+                        return .success
+                    } catch {
+                        return .networkError
+                    }
                 }
             }
         }
     }
 }
 
-struct ChildFeature: Feature {
-    @Observable
-    final class State {
-        var selectedId = ""
-    }
+struct LoginView: View {
+    @State private var store = Store(
+        initialState: .init(),
+        feature: LoginFeature()
+    )
 
-    enum Action: Sendable {
-        case select
-    }
-
-    enum ActionResult: Sendable {
-        case selected(id: String)
-    }
-
-    func handle() -> ActionHandler<Action, State, ActionResult> {
-        ActionHandler { action, state in
-            switch action {
-            case .select:
-                return .run { state in
-                    let id = state.selectedId
-                    return .selected(id: id)
+    var body: some View {
+        VStack {
+            TextField("Username", text: $store.state.username)
+            SecureField("Password", text: $store.state.password)
+            Button("Login") {
+                Task {
+                    let result = await store.send(.login).value
+                    switch result {
+                    case .success(.success):
+                        print("Navigate to home")
+                    case .success(.invalidCredentials):
+                        print("Show error: Invalid credentials")
+                    case .success(.networkError):
+                        print("Show error: Network error")
+                    case .failure(let error):
+                        print("Unexpected error: \(error)")
+                    }
                 }
             }
         }
@@ -117,13 +127,19 @@ struct ChildFeature: Feature {
 }
 ```
 
-This implementation provides:
-- `ChildFeature` returns selection results to the parent via `ActionResult`
-- `ParentView` receives results through the `onSelect` callback
-- Parent controls side effects like navigation
-- Everything stays within the view tree, allowing dependencies to be tracked
+**Key concepts:**
+- **ActionResult** - Define custom result types for your Feature
+- **`.just(result)`** - Return results immediately (synchronous)
+- **`.run { ... return result }`** - Return results after async work
+- **`await store.send().value`** - Wait for and receive the result
+- **`Result<ActionResult, Error>`** - Results are wrapped in Swift's Result type
 
-See <doc:PracticalGuide> for more details.
+**Use cases for ActionResult:**
+- Form validation with specific error types
+- Navigation decisions based on action outcomes
+- Showing different toasts based on success/failure patterns
+
+For parent-child communication patterns and more advanced examples, see <doc:PracticalGuide#Parent-Child-Communication>.
 
 ### @Observable Support
 

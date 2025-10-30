@@ -5,6 +5,82 @@ All notable changes to Flow will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2025-10-31
+
+### Documentation
+
+#### Comprehensive DocC Improvements
+
+This release includes a major overhaul of Flow's documentation based on a thorough three-round review of all DocC files. The improvements enhance clarity, add missing explanations, and significantly improve the learning experience for both beginners and advanced users.
+
+**High Priority Improvements:**
+
+- **Added thread-safety warning for `@unchecked Sendable`** in Middleware documentation
+  - Explains that `@unchecked Sendable` bypasses Swift's concurrency checks
+  - Clarifies why it's safe in Flow (MainActor execution guarantee)
+  - Includes inline code comments for better understanding
+
+- **Enhanced Getting Started guide** with clearer structure
+  - Added descriptive step titles ("Step 1: Define Your Feature", "Step 2: Create Your View")
+  - Added guidance note directing readers to CoreConcepts for detailed explanations
+  - Improved learning flow from practical example to conceptual understanding
+
+- **Added Quick Reference table** to Core Elements
+  - At-a-glance overview of all 5 core types (Store, Feature, ActionHandler, ActionResult, ActionTask)
+  - Lists purpose and key APIs for each element
+  - Improves discoverability and quick lookups
+
+- **Expanded core sections** with detailed explanations
+  - Store: Key responsibilities, `@State` lifecycle, sending actions
+  - Feature: Benefits (cohesion, reusability, type safety) with complete implementation
+  - ActionHandler: How it works with synchronous/async examples
+
+- **Simplified Result-Returning Actions** example in Core Concepts
+  - Replaced complex parent-child navigation example with clearer login validation example
+  - Better demonstrates `.just()`, `.run`, and Result type handling
+  - More accessible for beginners
+
+- **Added comprehensive error handling** to Practical Guide
+  - Task Cancellation: Added `.catch` with `cancelInFlight` explanation
+  - Parallel Processing: Added error handling for concurrent operations
+  - Parent-Child Communication: Added `.failure` case handling
+
+**Medium Priority Improvements:**
+
+- **Added multiple middleware usage section**
+  - Explains how to chain multiple middleware with `.use()`
+  - Documents execution order (beforeAction: top-down, afterAction: bottom-up, onError: top-down)
+  - Includes practical example combining logging, analytics, and error reporting
+
+- **Expanded `.just()` explanation** in Core Elements
+  - Compares `.just()` with `.none` for clarity
+  - Lists common use cases (validation, calculations, cache hits)
+  - Clarifies when to use synchronous vs async result returns
+
+- **Simplified Task Priority section** with reference table
+  - Replaced four separate code examples with concise reference table
+  - Adds note clarifying priority affects scheduling but doesn't guarantee order
+  - More scannable while preserving essential information
+
+**Additional Improvements:**
+
+- **Added Overview section** to Flow landing page
+  - Design philosophy explanation (view-local, unidirectional, type-safe, concurrency)
+  - Quick counter example for 30-second understanding
+  - Architecture diagram reference
+  - Comparison with global store architectures
+
+- **Added detailed `.cancellable()` explanation**
+  - Parameter descriptions (`id` for identification, `cancelInFlight` behavior)
+  - Task ID naming conventions and best practices
+  - Scoping information (task IDs are per-Store instance)
+
+**Statistics:**
+- 6 files modified (all Flow DocC files)
+- 12 commits of improvements
+- +307 lines added, -71 lines removed (net +236 lines)
+- Improved sections in Flow.md, GettingStarted.md, CoreConcepts.md, CoreElements.md, Middleware.md, PracticalGuide.md
+
 ## [1.1.1] - 2025-10-30
 
 ### Bug Fixes

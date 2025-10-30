@@ -1,12 +1,5 @@
 import Foundation
 
-/// Action execution closure that mutates state and returns a task.
-///
-/// - Note: Type constraints match Feature protocol requirements to ensure consistency.
-public typealias ActionExecution<Action: Sendable, State: AnyObject, ActionResult: Sendable> =
-  @MainActor (Action, State) async ->
-  ActionTask<Action, State, ActionResult>
-
 /// Error handler closure that can mutate state in response to errors.
 public typealias StateErrorHandler<State> = (Error, State) -> Void
 

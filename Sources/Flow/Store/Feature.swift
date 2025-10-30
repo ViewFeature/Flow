@@ -48,9 +48,9 @@ import Foundation
 ///       switch action {
 ///       case .login(let credentials):
 ///         state.isLoading = true          // ← Direct state mutation
-///         return .run { state in          // ← Async task
+///         return .run { state in          // ← Same state instance (reference type)
 ///           let user = try await authService.login(credentials)
-///           state.user = user
+///           state.user = user             // ← Mutations visible to outer scope
 ///           state.isAuthenticated = true
 ///           state.isLoading = false
 ///         }
@@ -68,6 +68,11 @@ import Foundation
 ///   }
 /// }
 /// ```
+///
+/// - Note: In the `.run` closure, the `state` parameter refers to the same instance as the outer
+///   `state` parameter (State is a reference type). All mutations inside `.run` are immediately
+///   visible to the outer scope. This allows you to update state both before and during async
+///   operations while maintaining a single source of truth.
 ///
 /// ## Task Management
 /// Your action handlers can return different task types:
@@ -138,6 +143,10 @@ public protocol Feature: Sendable {
   /// ```
   ///
   /// - Note: @Observable requires class types for SwiftUI observation
+  /// - Warning: Your State class **must** use the `@Observable` macro for SwiftUI integration.
+  ///   The type system cannot enforce this requirement. Forgetting `@Observable` will cause
+  ///   SwiftUI views to not update automatically when state changes, and the compiler will
+  ///   not warn you. Always verify your State class has the `@Observable` annotation.
   associatedtype State: AnyObject
 
   /// The type representing the result returned from action processing.
@@ -222,6 +231,11 @@ public protocol Feature: Sendable {
   /// mutation for optimal performance. All state mutations occur on the **MainActor**,
   /// ensuring thread-safe UI updates. It returns a ``ActionTask`` to handle
   /// any asynchronous side effects.
+  ///
+  /// - Note: The `handle()` method is called **once** during Store initialization.
+  ///   The returned ``ActionHandler`` instance is reused for all subsequent actions.
+  ///   Do not call `handle()` multiple times or store it separately - let the Store
+  ///   manage the ActionHandler lifecycle.
   ///
   /// ## Example
   /// ```swift

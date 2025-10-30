@@ -1,5 +1,36 @@
 import Foundation
 
+/// Action execution closure that mutates state and returns a task.
+///
+/// This typealias defines the signature for action processing logic used in ``ActionHandler``.
+/// The closure receives an action and state, performs any necessary state mutations,
+/// and returns an ``ActionTask`` for asynchronous side effects.
+///
+/// All execution occurs on the **MainActor**, ensuring thread-safe state mutations.
+///
+/// ## Example
+/// ```swift
+/// let execution: ActionExecution<MyAction, MyState, Void> = { action, state in
+///   switch action {
+///   case .increment:
+///     state.count += 1
+///     return .none
+///   }
+/// }
+/// ```
+///
+/// ## Type Parameters
+/// - `Action`: The action type to process (must be Sendable)
+/// - `State`: The state type to mutate (must be AnyObject/reference type)
+/// - `ActionResult`: The result type returned from action processing (must be Sendable)
+///
+/// ## See Also
+/// - ``ActionHandler/init(_:)``
+///
+/// - Note: Type constraints match Feature protocol requirements to ensure consistency.
+public typealias ActionExecution<Action: Sendable, State: AnyObject, ActionResult: Sendable> =
+  @MainActor (Action, State) async -> ActionTask<Action, State, ActionResult>
+
 /// A facade for action processing with fluent method chaining capabilities that can return typed results.
 ///
 /// `ActionHandler` provides a clean, composable API for defining how your feature
@@ -195,8 +226,25 @@ public final class ActionHandler<Action: Sendable, State: AnyObject, ActionResul
 extension ActionHandler {
   /// Adds error handling to the action processing pipeline.
   ///
+  /// The error handler receives any errors thrown during action processing
+  /// and can update state accordingly (e.g., setting error messages, resetting loading flags).
+  ///
   /// - Parameter errorHandler: A closure that handles errors
   /// - Returns: A new ActionHandler with error handling
+  ///
+  /// - Note: If you call `onError` multiple times, only the **last** handler will be used.
+  ///   Each call replaces the previous error handler.
+  ///
+  /// ## Example
+  /// ```swift
+  /// ActionHandler { action, state in
+  ///   // action processing
+  /// }
+  /// .onError { error, state in
+  ///   state.errorMessage = error.localizedDescription
+  ///   state.isLoading = false
+  /// }
+  /// ```
   public func onError(_ errorHandler: @escaping (Error, State) -> Void) -> ActionHandler<
     Action, State, ActionResult
   > {
@@ -205,8 +253,34 @@ extension ActionHandler {
 
   /// Transforms the task returned by action processing.
   ///
+  /// Use this to add cross-cutting concerns like logging, analytics, or monitoring
+  /// to all tasks without modifying individual action handlers.
+  ///
   /// - Parameter taskTransform: A closure that transforms the task
   /// - Returns: A new ActionHandler with task transformation
+  ///
+  /// ## Example: Add Logging to All Tasks
+  /// ```swift
+  /// ActionHandler { action, state in
+  ///   // action processing
+  /// }
+  /// .transform { task in
+  ///   switch task.operation {
+  ///   case .run(let id, let name, let operation, let onError, let cancelInFlight, let priority):
+  ///     return .run(id: id, name: name, priority: priority) { state in
+  ///       print("Task '\(name ?? id)' starting")
+  ///       let result = try await operation(state)
+  ///       print("Task '\(name ?? id)' completed")
+  ///       return result
+  ///     } onError: { error, state in
+  ///       print("Task '\(name ?? id)' failed: \(error)")
+  ///       onError?(error, state)
+  ///     }
+  ///   default:
+  ///     return task
+  ///   }
+  /// }
+  /// ```
   public func transform(
     _ taskTransform: @escaping (ActionTask<Action, State, ActionResult>)
       -> ActionTask<Action, State, ActionResult>
@@ -216,8 +290,26 @@ extension ActionHandler {
 
   /// Adds custom middleware to the action processing pipeline.
   ///
+  /// Middleware is executed in the order it's added. Call `use` multiple times
+  /// to add multiple middlewares, and they will execute sequentially.
+  ///
   /// - Parameter middleware: The middleware to add
   /// - Returns: A new ActionHandler with the middleware added
+  ///
+  /// ## Example: Add Multiple Middlewares
+  /// ```swift
+  /// ActionHandler { action, state in
+  ///   // action processing
+  /// }
+  /// .use(LoggingMiddleware())    // Executes first
+  /// .use(AnalyticsMiddleware())  // Executes second
+  /// .use(TimingMiddleware())     // Executes third
+  /// ```
+  ///
+  /// - Note: Middleware executes in **registration order**:
+  ///   - `beforeAction` hooks run in order (first → last)
+  ///   - Action logic executes
+  ///   - `afterAction` hooks run in order (first → last)
   public func use(_ middleware: some BaseActionMiddleware) -> ActionHandler<
     Action, State, ActionResult
   > {

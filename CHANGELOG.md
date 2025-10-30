@@ -5,6 +5,23 @@ All notable changes to Flow will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1] - 2025-10-30
+
+### Bug Fixes
+
+- **SwiftLint compliance**: Fixed `modifier_order` violation in LocationService initializer
+  - Corrected modifier order from `nonisolated override` to `override nonisolated`
+  - Ensures CI SwiftLint checks pass with `--strict` mode
+  - Follows Swift's modifier ordering rules as specified in Swift Language Guide
+
+### Documentation
+
+- **Improved clarity**: Removed subjective and exaggerated expressions from documentation
+  - Updated CoreConcepts.md for more objective technical descriptions
+  - Simplified Flow.md introduction for better clarity
+  - Improved README.md to focus on factual feature descriptions
+  - Enhanced professional tone across all documentation
+
 ## [1.1.0] - 2025-10-27
 
 ### Features

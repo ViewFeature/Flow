@@ -119,7 +119,17 @@ import Foundation
 ///
 /// The Facade pattern here is a feature, not a code smell. It provides clean abstraction
 /// and hides implementation complexity from users while maintaining full testability.
-public final class ActionHandler<Action, State, ActionResult: Sendable> {
+///
+/// ## Type Constraints
+///
+/// Type parameters are constrained to match Feature protocol requirements:
+/// - `Action: Sendable` ensures safe concurrent action dispatching
+/// - `State: AnyObject` ensures reference semantics for direct state mutation
+/// - `ActionResult: Sendable` ensures safe concurrent result handling
+///
+/// These constraints prevent common errors like using value-type State (which wouldn't
+/// support mutation) or non-Sendable actions (which could cause data races).
+public final class ActionHandler<Action: Sendable, State: AnyObject, ActionResult: Sendable> {
   private let processor: ActionProcessor<Action, State, ActionResult>
 
   /// Creates a ActionHandler with the given action processing logic.

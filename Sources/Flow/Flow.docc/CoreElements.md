@@ -28,6 +28,15 @@ These elements work together to build applications.
 
 **Store** manages state, receives actions from views, sends them to handlers, and processes results.
 
+**Key responsibilities:**
+- Holds the current state
+- Receives actions from views via `send()`
+- Coordinates with ActionHandler to process actions
+- Returns `ActionTask` for async result handling
+
+**Why use `@State`?**
+Store is held with `@State` to tie its lifecycle to the view. When the view appears, the store initializes; when dismissed, it cleans up automatically.
+
 ```swift
 import SwiftUI
 import Flow
@@ -47,9 +56,29 @@ var body: some View {
 }
 ```
 
+**Sending actions:**
+
+```swift
+// Fire-and-forget (common for state-only updates)
+store.send(.increment)
+
+// Handle results for navigation, validation, etc.
+Task {
+    let result = await store.send(.save).value
+    if case .success = result {
+        // Navigate or show confirmation
+    }
+}
+```
+
 ## Feature
 
-**Feature** defines State, Action, and ActionHandler in one place.
+**Feature** groups State, Actions, and ActionHandler in one place, providing a complete definition of a feature's behavior.
+
+**Why use Feature?**
+- **Cohesion** - Related logic stays together
+- **Reusability** - Easy to test and reuse across views
+- **Type safety** - State, Action, and ActionResult are strongly typed
 
 ```swift
 import Flow
@@ -68,7 +97,18 @@ struct UserFeature: Feature {
 
     func handle() -> ActionHandler<Action, State, Void> {
         ActionHandler { action, state in
-            // Business logic goes here
+            switch action {
+            case .load:
+                state.isLoading = true
+                return .run { state in
+                    let user = try await api.fetchUser()
+                    state.user = user
+                    state.isLoading = false
+                }
+            case .logout:
+                state.user = nil
+                return .none
+            }
         }
     }
 }
@@ -77,6 +117,35 @@ struct UserFeature: Feature {
 ## ActionHandler
 
 **ActionHandler** receives actions and current state, updates state, and returns an ActionTask.
+
+**How it works:**
+The handler is a closure that receives two parameters:
+- **action** - The action to process
+- **state** - The current state (mutable)
+
+You can update state directly and return a task describing any async work.
+
+**Example:**
+
+```swift
+ActionHandler<Action, State, Void> { action, state in
+    switch action {
+    case .increment:
+        state.count += 1  // Synchronous state update
+        return .none       // No async work
+
+    case .fetchData:
+        state.isLoading = true
+        return .run { state in  // Async work
+            let data = try await api.fetch()
+            state.data = data
+            state.isLoading = false
+        }
+    }
+}
+```
+
+**Generic type parameters:**
 
 ```swift
 ActionHandler<Action, State, ActionResult>

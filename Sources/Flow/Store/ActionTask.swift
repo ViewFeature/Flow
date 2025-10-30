@@ -476,6 +476,7 @@ extension ActionTask {
   public static func concatenate(_ tasks: ActionTask...) -> ActionTask {
     // Variadic guarantees at least one element at call site
     // Safe to force try because tasks cannot be empty
+    // swiftlint:disable:next force_try
     try! concatenate(tasks)
   }
 

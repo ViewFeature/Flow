@@ -209,6 +209,8 @@ return .cancel(id: "save", returning: .cancelled)
 
 **Task executing multiple tasks sequentially**
 
+Static tasks (compile-time):
+
 ```swift
 // Execute multiple steps in sequence
 return .concatenate(
@@ -224,6 +226,24 @@ return .concatenate(
         state.step = 3
     }
 )
+```
+
+Dynamic tasks (runtime) - guard against empty:
+
+```swift
+// Process items dynamically
+let tasks = items.map { item in
+    ActionTask.run { state in
+        try await process(item)
+    }
+}
+
+// Empty arrays require explicit handling
+guard !tasks.isEmpty else {
+    return .none  // Or handle empty case appropriately
+}
+
+return try .concatenate(tasks)
 ```
 
 Each task executes after the previous one completes. The final task's result is returned to the view.

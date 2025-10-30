@@ -340,7 +340,11 @@ public final class Store<F: Feature> {
       // 4. flattenConcatenated() preserves this property
       //
       // If this precondition fails, there's a bug in ActionTask construction
-      precondition(!tasks.isEmpty, "Implementation error: concatenated task list is empty. This should be impossible due to concatenate() throwing on empty arrays.")
+      precondition(
+        !tasks.isEmpty,
+        "Implementation error: concatenated task list is empty. " +
+        "This should be impossible due to concatenate() throwing on empty arrays."
+      )
 
       var lastResult: F.ActionResult = try await self.executeTask(tasks[0])
 

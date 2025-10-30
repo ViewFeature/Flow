@@ -190,9 +190,15 @@ extension FlowError: LocalizedError {
 
     case .noTasksToExecute(let context):
       if let context = context {
-        return "No tasks to execute in \(context). Empty task arrays are not allowed. If this is intentional, explicitly return .none instead."
+        return """
+          No tasks to execute in \(context). Empty task arrays are not allowed. \
+          If this is intentional, explicitly return .none instead.
+          """
       }
-      return "No tasks to execute. Empty task arrays are not allowed. If empty is valid, explicitly check and return .none."
+      return """
+        No tasks to execute. Empty task arrays are not allowed. \
+        If empty is valid, explicitly check and return .none.
+        """
     }
   }
 

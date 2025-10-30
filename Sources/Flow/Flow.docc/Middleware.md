@@ -52,10 +52,14 @@ struct AnalyticsMiddleware: ActionMiddleware {
 
 Use `final class` with `@unchecked Sendable` when middleware needs to track state:
 
+> Warning: `@unchecked Sendable` bypasses Swift's thread-safety checks. You must ensure thread-safety manually. This is safe in Flow because all middleware operations run on the MainActor.
+
 ```swift
 import Flow
 
 final class TimingMiddleware: ActionMiddleware, @unchecked Sendable {
+    // ⚠️ @unchecked Sendable: We guarantee thread-safety because Flow ensures
+    // all middleware methods execute on MainActor with defaultIsolation
     let id = "TimingMiddleware"
     private var startTimes: [String: Date] = [:]
 

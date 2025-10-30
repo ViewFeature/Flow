@@ -330,32 +330,30 @@ public final class Store<F: Feature> {
     case .concatenated:
       // Flatten concatenate tree for sequential iteration (O(n) → O(1) depth)
       let tasks = task.flattenConcatenated()
-      var lastResult: F.ActionResult?
 
-      for task in tasks {
+      // INVARIANT: flattenConcatenated() always returns ≥1 element
+      //
+      // Proof:
+      // 1. concatenate([]) now throws FlowError.noTasksToExecute
+      // 2. .concatenated can only be constructed via concatenate()
+      // 3. Therefore, .concatenated always contains ≥1 task
+      // 4. flattenConcatenated() preserves this property
+      //
+      // If this precondition fails, there's a bug in ActionTask construction
+      precondition(!tasks.isEmpty, "Implementation error: concatenated task list is empty. This should be impossible due to concatenate() throwing on empty arrays.")
+
+      var lastResult: F.ActionResult = try await self.executeTask(tasks[0])
+
+      for task in tasks.dropFirst() {
         // Check for cancellation between sequential tasks
         guard !Task.isCancelled else {
           throw StoreError.cancelled
         }
 
-        let result = try await self.executeTask(task)
-
-        // Update the last result
-        lastResult = result
+        lastResult = try await self.executeTask(task)
       }
 
-      // Return the last result, or throw if none found (all were .just)
-      guard let result = lastResult else {
-        // All tasks were .just with Void - return Void
-        if F.ActionResult.self is Void.Type {
-          // Safe to return () as F.ActionResult when ActionResult == Void
-          // swiftlint:disable:next force_cast
-          return (() as! F.ActionResult)
-        }
-        throw StoreError.cancelled
-      }
-
-      return result
+      return lastResult
     }
   }
 }

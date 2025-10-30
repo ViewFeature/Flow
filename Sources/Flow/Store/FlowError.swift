@@ -133,6 +133,29 @@ public enum FlowError: Error {
   ///   - message: The error message
   ///   - underlying: Optional underlying error
   case custom(message: String, underlying: Error? = nil)
+
+  /// No tasks provided to concatenate.
+  ///
+  /// Thrown when attempting to concatenate an empty task array.
+  /// This typically indicates a logic error where tasks were expected but none were generated.
+  ///
+  /// ## Recovery
+  /// If empty task lists are valid for your use case, explicitly check before concatenating:
+  /// ```swift
+  /// guard !tasks.isEmpty else {
+  ///   return .none  // Explicitly handle empty case
+  /// }
+  /// return try .concatenate(tasks)
+  /// ```
+  ///
+  /// ## Debugging
+  /// Check why the task array is empty:
+  /// - Is the data source empty?
+  /// - Is there a filter that's too restrictive?
+  /// - Is there a mapping error?
+  ///
+  /// - Parameter context: Additional context about where the error occurred
+  case noTasksToExecute(context: String? = nil)
 }
 
 // MARK: - LocalizedError Conformance
@@ -164,6 +187,12 @@ extension FlowError: LocalizedError {
         return "\(message): \(underlying.localizedDescription)"
       }
       return message
+
+    case .noTasksToExecute(let context):
+      if let context = context {
+        return "No tasks to execute in \(context). Empty task arrays are not allowed. If this is intentional, explicitly return .none instead."
+      }
+      return "No tasks to execute. Empty task arrays are not allowed. If empty is valid, explicitly check and return .none."
     }
   }
 
@@ -187,6 +216,16 @@ extension FlowError: LocalizedError {
 
     case .custom:
       return nil
+
+    case .noTasksToExecute:
+      return """
+        Check if empty is expected:
+
+        guard !tasks.isEmpty else {
+          return .none  // Explicit: empty is OK
+        }
+        return try .concatenate(tasks)
+        """
     }
   }
 
@@ -210,6 +249,12 @@ extension FlowError: LocalizedError {
 
     case .custom(_, let underlying):
       return underlying?.localizedDescription
+
+    case .noTasksToExecute(let context):
+      if let context = context {
+        return "Empty task array in \(context)"
+      }
+      return "Empty task array provided to concatenate"
     }
   }
 }

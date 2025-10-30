@@ -85,6 +85,10 @@ func handle() -> ActionHandler<Action, State, Void> {
 
 Cancel previous requests with `.cancellable(id:cancelInFlight:)` for user input operations like search.
 
+**Understanding `cancelInFlight`:**
+- `true` - Cancels any running task with the same ID before starting the new one
+- `false` - Allows multiple tasks with the same ID to run concurrently
+
 ```swift
 import Flow
 
@@ -100,6 +104,16 @@ func handle() -> ActionHandler<Action, State, Void> {
                 state.isSearching = false
             }
             .cancellable(id: "search", cancelInFlight: true)
+            .catch { error, state in
+                state.isSearching = false
+                // Note: Cancellation errors are handled automatically,
+                // only explicit errors from api.search() reach here
+                if error is CancellationError {
+                    // Task was cancelled, no action needed
+                } else {
+                    state.errorMessage = error.localizedDescription
+                }
+            }
 
         case .cancelSearch:
             state.isSearching = false
@@ -120,12 +134,18 @@ func handle() -> ActionHandler<Action, State, Void> {
     ActionHandler { action, state in
         switch action {
         case .loadAll:
+            state.isLoading = true
             return .run { state in
                 async let users = api.fetchUsers()
                 async let posts = api.fetchPosts()
 
                 state.users = try await users
                 state.posts = try await posts
+                state.isLoading = false
+            }
+            .catch { error, state in
+                state.isLoading = false
+                state.errorMessage = "Failed to load data: \(error.localizedDescription)"
             }
         }
     }
@@ -263,8 +283,12 @@ struct ChildView: View {
             Button("Validate") {
                 Task {
                     let result = await store.send(.validate).value
-                    if case .success(let validationResult) = result {
+                    switch result {
+                    case .success(let validationResult):
                         onValidate(validationResult)
+                    case .failure(let error):
+                        print("Validation error: \(error)")
+                        // Handle unexpected errors (network issues, etc.)
                     }
                 }
             }

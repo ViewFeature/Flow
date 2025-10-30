@@ -240,7 +240,7 @@ func handle() -> ActionHandler<Action, State, Void> {
 
 ## ドキュメント
 
-📖 **[完全なドキュメント](https://viewfeature.github.io/Flow/documentation/flow/)** — 明確さを改善した包括的なガイド（v1.2.0）
+📖 **[完全なドキュメント](https://viewfeature.github.io/Flow/documentation/flow/)**
 
 - **[はじめに](https://viewfeature.github.io/Flow/documentation/flow/gettingstarted/)**
 - **[コアコンセプト](https://viewfeature.github.io/Flow/documentation/flow/coreconcepts/)**

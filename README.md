@@ -241,7 +241,7 @@ func handle() -> ActionHandler<Action, State, Void> {
 
 ## Documentation
 
-📖 **[Full Documentation](https://viewfeature.github.io/Flow/documentation/flow/)** — Comprehensive guides with improved clarity (v1.2.0)
+📖 **[Full Documentation](https://viewfeature.github.io/Flow/documentation/flow/)**
 
 - **[Getting Started](https://viewfeature.github.io/Flow/documentation/flow/gettingstarted/)**
 - **[Core Concepts](https://viewfeature.github.io/Flow/documentation/flow/coreconcepts/)**

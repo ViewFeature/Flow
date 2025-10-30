@@ -138,6 +138,10 @@ public protocol Feature: Sendable {
   /// ```
   ///
   /// - Note: @Observable requires class types for SwiftUI observation
+  /// - Warning: Your State class **must** use the `@Observable` macro for SwiftUI integration.
+  ///   The type system cannot enforce this requirement. Forgetting `@Observable` will cause
+  ///   SwiftUI views to not update automatically when state changes, and the compiler will
+  ///   not warn you. Always verify your State class has the `@Observable` annotation.
   associatedtype State: AnyObject
 
   /// The type representing the result returned from action processing.

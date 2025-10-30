@@ -272,6 +272,16 @@ return .just(.success)
 
 **Execute async processing**
 
+Use `.cancellable(id:cancelInFlight:)` to manage long-running tasks:
+
+**Parameters:**
+- **`id`** - Unique identifier for the task (used for cancellation)
+- **`cancelInFlight`** - Behavior when starting a new task with the same ID:
+  - `true` - Cancels the existing task before starting the new one
+  - `false` - Allows both tasks to run concurrently
+
+**Example:**
+
 ```swift
 return .run { state in
     let user = try await api.fetchUser()
@@ -279,6 +289,11 @@ return .run { state in
 }
 .cancellable(id: "load-user", cancelInFlight: true)
 ```
+
+**Task ID naming:**
+- Use descriptive names: `"search"`, `"load-user"`, `"upload-photo"`
+- Keep consistent across related actions
+- Task IDs are scoped to each Store instance
 
 **Cancel running task**
 

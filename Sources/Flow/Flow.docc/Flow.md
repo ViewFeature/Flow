@@ -1,6 +1,6 @@
 # ``Flow``
 
-A library for managing state in SwiftUI applications in a type-safe way. Flow provides a unidirectional data flow architecture and supports Observation and Swift 6 Approachable Concurrency.
+A library for managing state in SwiftUI applications in a type-safe way. Flow provides a unidirectional data flow architecture and supports Observation and Swift 6 Concurrency.
 
 ## Overview
 
@@ -63,7 +63,7 @@ Actions flow through the handler, update state, and SwiftUI re-renders automatic
 
 - **No global store** - Each view holds its own state with `@State`
 - **Result-returning actions** - Views receive action processing results
-- **Swift 6 support** - Thread-safe by default with Approachable Concurrency
+- **Swift 6 support** - Thread-safe by default with Swift 6 Concurrency
 - **@Observable support** - Uses SwiftUI's standard `@Observable` with no Combine dependency
 - **Flexible middleware** - Add cross-cutting concerns like logging, analytics, and debugging
 

@@ -158,9 +158,9 @@ final class State {
 - Reduced code
 - Integrates with SwiftUI's standard APIs
 
-### Approachable Concurrency
+### Swift 6 Concurrency
 
-Supports **Approachable Concurrency**.
+Supports **Swift 6 Concurrency**.
 
 A Swift 6 feature that allows setting default actor isolation for an entire module. Flow assumes `defaultIsolation(MainActor.self)`, eliminating the need for explicit `@MainActor` annotations.
 

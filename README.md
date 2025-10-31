@@ -69,11 +69,31 @@ struct CounterView: View {
 }
 ```
 
-## Key Features
+## The 5 Core Principles
 
-### No Global Store
+### 1. Unidirectional Data Flow
 
-Each view holds its own state with `@State`.
+All state changes flow in one direction: **Action → Handler → State → View**. This makes your app's behavior predictable and easy to debug.
+
+```swift
+Button("Load") {
+    store.send(.load)  // Action flows to handler
+}
+
+// Handler updates state
+case .load:
+    return .run { state in
+        state.data = try await api.fetch()  // State flows to view
+    }
+```
+
+- Predictable data flow
+- Easy to trace state changes
+- Well-defined inputs and outputs
+
+### 2. View-Local State
+
+Each view holds its own state with `@State`, aligned with SwiftUI's philosophy. No global store, no store hierarchies.
 
 ```swift
 struct CounterView: View {
@@ -93,80 +113,61 @@ struct CounterView: View {
 }
 ```
 
-- State scope is clear (same lifecycle as the view)
-- No need to manage global state
+- Clear lifecycle (store lives with view)
+- No global state management
+- Memory efficient
 
-### Result-Returning Actions
+### 3. Result-Returning Actions
 
-Actions can return results through `ActionTask`. The result type (`ActionResult`) can be freely defined for each Feature.
-
-In this example, a child view returns a selection result to the parent, which handles navigation:
+Actions return typed results, enabling functional patterns and making side effects explicit.
 
 ```swift
-struct ChildSelectFeature: Feature {
-    @Observable
-    final class State {
-        var selectedId = ""
-    }
-
-    enum Action: Sendable {
-        case select
-    }
-
-    enum ActionResult: Sendable {
-        case selected(id: String)
-    }
-
-    func handle() -> ActionHandler<Action, State, ActionResult> {
-        ActionHandler { action, state in
-            switch action {
-            case .select:
-                return .run { state in
-                    let id = state.selectedId
-                    return .selected(id: id)
-                }
-            }
-        }
-    }
+enum ActionResult: Sendable {
+    case saved(id: String)
 }
 
-struct ChildView: View {
-    @State private var store = Store(
-        initialState: .init(),
-        feature: ChildSelectFeature()
-    )
-    let onSelect: (String) async -> Void
-
-    var body: some View {
-        Button("Select") {
-            Task {
-                let result = await store.send(.select).value
-                if case .success(.selected(let id)) = result {
-                    await onSelect(id)
-                }
-            }
-        }
+// In handler
+case .save(let title):
+    return .run { state in
+        let todo = try await api.create(title: title)
+        return .saved(id: todo.id)  // Return result
     }
-}
 
-struct ParentView: View {
-    @Environment(\.navigator) private var navigator
-
-    var body: some View {
-        ChildView { selectedId in
-            await navigator.navigate(to: .detail(id: selectedId))
+// In view
+Button("Save") {
+    Task {
+        let result = await store.send(.save(title: title)).value
+        if case .success(.saved(let id)) = result {
+            await navigator.navigate(to: .detail(id: id))
         }
     }
 }
 ```
 
-This implementation provides:
-- `ChildFeature` returns selection results to the parent via `ActionResult`
-- `ParentView` receives results through the `onSelect` callback
-- Parent controls side effects like navigation
-- Everything stays within the view tree, making dependencies easy to track
+- Actions return values like functions
+- Parent controls navigation and side effects
+- Type-safe contracts
 
-### @Observable Support
+### 4. MainActor Isolation
+
+Directly update state inside async operations—safely. Flow leverages Swift 6's `defaultIsolation(MainActor.self)` for compile-time safety.
+
+```swift
+case .fetchUser:
+    state.isLoading = true
+    return .run { state in
+        // Directly update state in async context!
+        let user = try await api.fetchUser()
+        state.user = user
+        state.isLoading = false
+    }
+```
+
+- Code locality (loading, fetching, errors in one place)
+- Intuitive (write naturally like regular Swift)
+- Compile-time safety (data races caught at compile time)
+
+### 5. @Observable Support
 
 Uses SwiftUI's standard **@Observable** instead of `@ObservableObject` or `@Published`.
 
@@ -178,66 +179,8 @@ final class State {
 ```
 
 - No Combine dependency
-- Less boilerplate code
-- Integrates with SwiftUI's standard APIs
-
-### Swift 6 Concurrency
-
-Supports Swift 6 concurrency checking. Designed with `defaultIsolation(MainActor.self)` in mind.
-
-```swift
-.defaultIsolation(MainActor.self)
-```
-
-All operations run on the MainActor, with **data races caught at compile time**.
-
-```swift
-func handle() -> ActionHandler<Action, State, Void> {
-    ActionHandler { action, state in
-        switch action {
-        case .increment:
-            state.count += 1  // ✅ Synchronous operations are safe
-            return .none
-
-        case .loadData:
-            return .run { state in
-                let data = try await api.fetch()
-                state.data = data  // ✅ State mutations safe even in async operations
-            }
-        }
-    }
-}
-```
-
-- Thread-safety guaranteed
-- Native `async/await` support
-- Direct state mutations in `.run` blocks
-
-### Observable Actions
-
-Flow uses **middleware** to observe actions, enabling cross-cutting concerns like logging, analytics, and debugging.
-
-```swift
-struct AnalyticsMiddleware: BeforeActionMiddleware {
-    let id = "Analytics"
-    let analytics: AnalyticsService
-
-    func beforeAction<Action, State>(_ action: Action, state: State) async {
-        analytics.track(String(describing: action))
-    }
-}
-
-func handle() -> ActionHandler<Action, State, Void> {
-    ActionHandler { action, state in
-        // ...
-    }
-    .use(LoggingMiddleware(category: "Counter"))
-    .use(AnalyticsMiddleware(analytics: .shared))
-}
-```
-
-- Observe all actions in one place
-- Logging, analytics, and debugging support
+- Less boilerplate
+- Platform aligned with SwiftUI
 
 ## Documentation
 

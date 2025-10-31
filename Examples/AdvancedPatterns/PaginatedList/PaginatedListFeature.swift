@@ -177,10 +177,10 @@ struct PaginatedListFeature: Feature {
         state.isRefreshing = false
         state.isLoadingMore = false
 
-        if let vfError = error as? FlowError {
-          state.error = vfError
+        if let paginationError = error as? PaginationError {
+          state.error = paginationError
         } else {
-          state.error = .networkError(underlying: error)
+          state.error = .fetchFailed(underlying: error)
         }
 
         return .none

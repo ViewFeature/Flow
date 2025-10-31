@@ -1,174 +1,200 @@
 # Core Concepts
 
-Learn how unidirectional data flow and core components work.
+Learn Flow's design philosophy through five core principles.
 
 ## Overview
 
-This guide explains Flow's design philosophy and key features. You'll learn about unidirectional data flow, why Flow avoids global stores, result-returning actions, and other important concepts.
+This guide explains Flow's design philosophy and key features. Flow combines the clarity of unidirectional data flow with SwiftUI's modern capabilities—Observation and Swift 6 Concurrency—to provide a simple yet robust state management solution.
 
-## Unidirectional Data Flow
+## The 5 Core Principles
 
-Flow adopts unidirectional data flow. All state changes occur through actions, allowing you to track how state evolves.
+### 1. Unidirectional Data Flow: Predictable State Management
+
+Flow adopts unidirectional data flow, inspired by Redux and ReSwift. All state changes flow in one direction, making your application's behavior predictable and easy to reason about.
+
+```
+Action → Handler → State → View
+  ↑                           ↓
+  └──────── User Event ────────┘
+```
 
 ![Flow Architecture Diagram](flow-diagram.svg)
 
-### Flow of Execution
+**How it works:**
 
-1. User taps a button
-2. View sends an action through the store
-3. Handler updates state
-4. SwiftUI detects state changes
-5. View re-renders automatically
+1. **View** - User event occurs (button tap, etc.)
+2. **Action** - View sends an action to the store (`store.send(.increment)`)
+3. **Handler** - ActionHandler processes the action and updates state
+4. **State** - State changes automatically propagate to the view (`@Observable`)
+5. **View** - UI updates to reflect the new state
 
-## Key Features
+```swift
+// 1. View event occurs
+Button("Load") {
+    store.send(.load)  // 2. Send action
+}
 
-### No Global Store
+// 3. Handler processes action
+ActionHandler { action, state in
+    switch action {
+    case .load:
+        state.isLoading = true  // 4. Update state
+        return .run { state in
+            let data = try await api.fetch()
+            state.data = data  // 4. Update state
+        }
+    }
+}
 
-Each view holds its own state with `@State`.
+// 5. View automatically updates (@Observable)
+if store.state.isLoading {
+    ProgressView()
+}
+```
+
+**Benefits:**
+- **Predictable** - Data flows in one direction, making it easy to trace
+- **Debuggable** - Clear visibility into which actions modify which state
+- **Testable** - Well-defined inputs (actions) and outputs (state)
+
+### 2. View-Local State: Aligned with SwiftUI Philosophy
+
+In SwiftUI, **only Views form a tree structure**:
+
+```
+NavigationStack (View)
+  └─ ListScreen (View)
+       └─ DetailScreen (View)
+```
+
+Parent views → child views → grandchild views form a hierarchy, but state is held locally by each view using `@State`.
+
+**The Problem with Many State Management Libraries:**
+
+Many libraries try to create store hierarchies (parent store → child store → grandchild store). This deviates from SwiftUI's philosophy and adds unnecessary complexity.
+
+**Flow's Approach:**
+
+Following SwiftUI's standard, each view holds its own independent store. There's no parent-child relationship between stores:
 
 ```swift
 import SwiftUI
 import Flow
 
-struct CounterView: View {
+struct UserListView: View {
+    // Each view holds its own independent store
     @State private var store = Store(
-        initialState: .init(),
-        feature: CounterFeature()
+        initialState: UserFeature.State(),
+        feature: UserFeature()
     )
 
     var body: some View {
-        VStack {
-            Text("\(store.state.count)")
-            Button("Increment") {
-                store.send(.increment)
-            }
+        List(store.state.users) { user in
+            Text(user.name)
+        }
+        .onAppear {
+            store.send(.load)
         }
     }
 }
 ```
 
-- State scope matches the view lifecycle
-- Reduces the need to manage global state
+**Benefits:**
+- **Aligns with SwiftUI** - Tree structure exists only in views
+- **Simple** - No need to manage store hierarchies
+- **Clear lifecycle** - Store lifecycle matches view lifecycle
+- **Independent testing** - Each feature can be tested in isolation
+- **Memory efficient** - Store is deallocated when view disappears
 
-### Result-Returning Actions
+### 3. Result-Returning Actions: Functional Clarity
 
-Actions can return results through `ActionTask`. The result type (`ActionResult`) can be defined for each Feature.
-
-**Basic example:**
+Actions can return typed results, enabling functional programming patterns and making side effects explicit.
 
 ```swift
 import SwiftUI
 import Flow
 
-struct LoginFeature: Feature {
+struct TodoFeature: Feature {
     @Observable
     final class State {
-        var username = ""
-        var password = ""
+        var todos: [Todo] = []
     }
 
     enum Action: Sendable {
-        case login
+        case save(title: String)
     }
 
     enum ActionResult: Sendable {
-        case success
-        case invalidCredentials
-        case networkError
+        case saved(id: String)
     }
 
     func handle() -> ActionHandler<Action, State, ActionResult> {
         ActionHandler { action, state in
             switch action {
-            case .login:
-                if state.username.isEmpty || state.password.isEmpty {
-                    return .just(.invalidCredentials)  // Return result immediately
-                }
-                return .run { state in  // Async work with result
-                    do {
-                        try await api.login(state.username, state.password)
-                        return .success
-                    } catch {
-                        return .networkError
-                    }
+            case .save(let title):
+                return .run { state in
+                    let todo = try await api.create(title: title)
+                    state.todos.append(todo)
+                    return .saved(id: todo.id)
                 }
             }
         }
     }
 }
 
-struct LoginView: View {
-    @State private var store = Store(
-        initialState: .init(),
-        feature: LoginFeature()
-    )
-
-    var body: some View {
-        VStack {
-            TextField("Username", text: $store.state.username)
-            SecureField("Password", text: $store.state.password)
-            Button("Login") {
-                Task {
-                    let result = await store.send(.login).value
-                    switch result {
-                    case .success(.success):
-                        print("Navigate to home")
-                    case .success(.invalidCredentials):
-                        print("Show error: Invalid credentials")
-                    case .success(.networkError):
-                        print("Show error: Network error")
-                    case .failure(let error):
-                        print("Unexpected error: \(error)")
-                    }
-                }
-            }
+// View side
+Button("Save") {
+    Task {
+        let result = await store.send(.save(title: title)).value
+        if case .success(.saved(let id)) = result {
+            await navigator.navigate(to: .detail(id: id))
         }
     }
 }
 ```
 
-**Key concepts:**
-- **ActionResult** - Define custom result types for your Feature
-- **`.just(result)`** - Return results immediately (synchronous)
-- **`.run { ... return result }`** - Return results after async work
-- **`await store.send().value`** - Wait for and receive the result
-- **`Result<ActionResult, Error>`** - Results are wrapped in Swift's Result type
+**Benefits:**
+- **Actions return values** - Functional clarity like regular functions
+- **Parent controls side effects** - Navigation, notifications decided at higher levels
+- **Clear responsibility** - Easy to track where things happen
+- **Type-safe contract** - Result types are explicit and compile-time checked
 
-**Use cases for ActionResult:**
-- Form validation with specific error types
-- Navigation decisions based on action outcomes
-- Showing different toasts based on success/failure patterns
+**Common use cases:**
+- **Form validation** - Return specific validation error types
+- **Navigation decisions** - Parent decides where to navigate based on results
+- **Error handling** - Different UI responses for different failure types
+- **Parent-child communication** - Child returns results, parent handles them
 
-For parent-child communication patterns and more advanced examples, see <doc:PracticalGuide#Parent-Child-Communication>.
+For advanced patterns, see <doc:PracticalGuide#Parent-Child-Communication>.
 
-### @Observable Support
+### 4. MainActor Isolation: Safe State Updates in Async Context ⭐️
 
-Uses SwiftUI's standard **@Observable** instead of `@ObservableObject` or `@Published`.
+One of Flow's most distinctive features: you can **directly update state inside async operations**.
 
 ```swift
-import Observation
-
-@Observable
-final class State {
-    var count = 0
-}
+case .fetchUser:
+    state.isLoading = true
+    return .run { state in
+        // Directly update state inside async context!
+        let user = try await api.fetchUser()
+        state.user = user
+        state.isLoading = false
+    }
+    .catch { error, state in
+        state.isLoading = false
+        state.error = error
+    }
 ```
 
-- No Combine dependency
-- Reduced code
-- Integrates with SwiftUI's standard APIs
+**How it works:**
 
-### Swift 6 Concurrency
-
-Supports **Swift 6 Concurrency**.
-
-A Swift 6 feature that allows setting default actor isolation for an entire module. Flow assumes `defaultIsolation(MainActor.self)`, eliminating the need for explicit `@MainActor` annotations.
+Flow leverages Swift 6's `defaultIsolation(MainActor.self)` feature, which sets default actor isolation for an entire module. This eliminates the need for explicit `@MainActor` annotations everywhere.
 
 ```swift
 .defaultIsolation(MainActor.self)
 ```
 
-This ensures all operations run on the MainActor, with **compile-time data race detection**. A data race occurs when multiple threads access the same memory simultaneously and at least one performs a write.
+All operations run on the MainActor, with **compile-time data race detection**. A data race occurs when multiple threads access the same memory simultaneously and at least one performs a write.
 
 ```swift
 import Flow
@@ -177,25 +203,54 @@ func handle() -> ActionHandler<Action, State, Void> {
     ActionHandler { action, state in
         switch action {
         case .increment:
-            state.count += 1  // Synchronous operations are safe
+            state.count += 1  // ✅ Synchronous operations are safe
             return .none
 
         case .loadData:
             return .run { state in
                 let data = try await api.fetch()
-                state.data = data  // State mutations safe even in async operations
+                state.data = data  // ✅ State mutations safe even in async
             }
         }
     }
 }
 ```
 
-- Provides thread-safety
-- Native `async/await` support
+**Benefits:**
+- **Code locality** - Loading, data fetching, and error handling in one place
+- **Intuitive** - Write code naturally, just like regular Swift
+- **Compile-time safety** - Data races detected at compile time, not runtime
+- **No manual dispatch** - No need to manage dispatch queues or MainActor annotations
 
-### Observable Actions
+This approach differs from traditional patterns where you must send new actions or use callbacks to update state from async contexts.
 
-Flow uses **middleware** to observe actions.
+### 5. SwiftUI's Standard Observation
+
+Flow uses SwiftUI's standard **@Observable** macro, introduced in iOS 17, instead of `@ObservableObject` or `@Published`.
+
+```swift
+import Observation
+
+@Observable
+final class State {
+    var count = 0
+    var isLoading = false
+    var errorMessage: String?
+}
+```
+
+**Benefits:**
+- **No Combine dependency** - Uses SwiftUI's standard features only
+- **Optimized by SwiftUI** - Benefits from SwiftUI's diffing and performance improvements
+- **Platform aligned** - Grows with Apple's ecosystem evolution
+- **Lower learning curve** - Natural for SwiftUI developers
+- **Less boilerplate** - No need for `@Published` annotations
+
+## Additional Features
+
+### Middleware for Cross-Cutting Concerns
+
+While not a core principle, Flow provides middleware for observing actions across your application. This is useful for logging, analytics, and debugging:
 
 ```swift
 import Flow
@@ -218,18 +273,18 @@ func handle() -> ActionHandler<Action, State, Void> {
 }
 ```
 
-- Observe actions in one place
-- Use for logging, analytics, and debugging
+For detailed information, see <doc:Middleware>.
 
 ## Next Steps
 
-Now that you understand the core concepts, let's learn about each element in detail:
+Now that you understand Flow's core principles, let's explore the implementation details:
 
 - **Next**: <doc:CoreElements>
 
 **Recommended learning path**:
-1. <doc:Middleware>
-2. <doc:PracticalGuide>
+1. <doc:CoreElements> - Learn about Feature, Store, ActionHandler, and ActionTask
+2. <doc:Middleware> - Add cross-cutting concerns like logging and analytics
+3. <doc:PracticalGuide> - See practical patterns and real-world examples
 
 ## See Also
 

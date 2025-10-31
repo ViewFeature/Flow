@@ -4,7 +4,7 @@
 [![Platforms](https://img.shields.io/badge/Platforms-iOS%20|%20macOS%20|%20watchOS%20|%20tvOS-blue.svg)](https://github.com/ViewFeature/Flow)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-SwiftUI向けの型安全な状態管理ライブラリです。単方向データフローアーキテクチャを採用し、Swift 6のApproachable Concurrencyに対応しています。
+SwiftUI向けの型安全な状態管理ライブラリです。単方向データフローアーキテクチャを採用し、ObservationとSwift 6のApproachable Concurrencyに対応しています。
 
 <p align="center">
     <img src="flow-diagram.svg" alt="Flow Architecture Diagram" />

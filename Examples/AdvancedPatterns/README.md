@@ -9,7 +9,7 @@
 **学習内容:**
 - 指数バックオフリトライ
 - 最大リトライ回数の制御
-- FlowError によるエラーハンドリング
+- カスタムエラー型によるエラーハンドリング
 - タスクキャンセル
 - リトライ中のローディング状態
 
@@ -36,7 +36,7 @@ return .run { state in
             try await Task.sleep(for: delay)
             try await performFetch(state: state)  // 再帰的リトライ
         } else {
-            throw FlowError.custom(message: "Max retries exceeded")
+            throw RetryError.maxRetriesExceeded(attempts: maxRetries)
         }
     }
 }
@@ -215,14 +215,30 @@ struct RobustPaginatedListFeature: Feature {
 
 ### 1. エラーハンドリング
 
-全ての例で FlowError を使用：
+各機能で専用のエラー型を定義してエラーハンドリング：
 
 ```swift
+// アプリケーション固有のエラー型を定義
+enum RetryError: Error, LocalizedError {
+    case maxRetriesExceeded(attempts: Int)
+    case networkFailure(underlying: Error)
+
+    var errorDescription: String? {
+        switch self {
+        case .maxRetriesExceeded(let attempts):
+            return "Failed after \(attempts) retry attempts"
+        case .networkFailure(let underlying):
+            return "Network error: \(underlying.localizedDescription)"
+        }
+    }
+}
+
+// エラーハンドリング
 .catch { error, state in
-    if let vfError = error as? FlowError {
-        state.error = vfError
+    if let retryError = error as? RetryError {
+        state.error = retryError
     } else {
-        state.error = .networkError(underlying: error)
+        state.error = .networkFailure(underlying: error)
     }
 }
 ```
@@ -260,7 +276,7 @@ return .run { state in
 @Observable
 final class State {
     var isLoading = false
-    var error: FlowError?
+    var error: RetryError?  // アプリケーション固有のエラー型
 }
 
 // ❌ Bad: Feature に状態を持つ
@@ -290,7 +306,7 @@ swift test --filter MultiStepWizardFeature
 /// Demonstrates:
 /// - Retry with exponential backoff
 /// - Maximum retry attempts
-/// - Error handling with FlowError
+/// - Error handling with custom error types
 /// ...
 struct RetryNetworkFeature: Feature { ... }
 ```

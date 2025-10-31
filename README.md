@@ -257,7 +257,7 @@ Add Flow to your `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/ViewFeature/Flow.git", from: "1.2.0")
+    .package(url: "https://github.com/ViewFeature/Flow.git", from: "1.3.0")
 ],
 targets: [
     .target(
@@ -276,7 +276,7 @@ targets: [
 
 - Select **File → Add Package Dependencies**
 - Enter the URL: `https://github.com/ViewFeature/Flow.git`
-- Select version: `1.2.0` or later
+- Select version: `1.3.0` or later
 
 **Recommended**: Add `-default-isolation MainActor` to your target's **Build Settings → Other Swift Flags**.
 

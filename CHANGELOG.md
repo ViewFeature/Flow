@@ -5,6 +5,71 @@ All notable changes to Flow will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2025-10-31
+
+### Breaking Changes
+
+#### FlowError Removal and StoreError Introduction
+
+This release removes `FlowError` and introduces `StoreError` to improve separation of concerns between framework-level and application-level errors.
+
+**What Changed:**
+
+- **Removed `FlowError` entirely**
+  - `FlowError` contained mixed concerns (framework + application errors)
+  - Application-level errors like `validationFailed`, `networkError`, and `stateError` should be defined by your application, not the framework
+  - This change follows the single responsibility principle and provides better flexibility
+
+- **Introduced `StoreError` for framework-level errors only**
+  - `StoreError.deallocated`: Store lifecycle error (when Store is deallocated while tasks are running)
+  - `StoreError.cancelled`: Task cancellation
+  - `StoreError.noTasksToExecute`: API misuse detection (when trying to wait for tasks without any)
+
+**Migration Guide:**
+
+If you were using `FlowError` in your application:
+
+```swift
+// Before (1.2.0 and earlier)
+enum MyAction {
+    case failed(FlowError)
+}
+
+// After (1.3.0+)
+enum MyError: Error {
+    case validationFailed(String)
+    case networkError(Error)
+    case custom(String)
+}
+
+enum MyAction {
+    case failed(MyError)
+}
+```
+
+**Benefits:**
+- Clear separation between framework errors (StoreError) and application errors (custom types)
+- More flexible error handling for application developers
+- Better follows single responsibility principle
+- Encourages proper domain-specific error design
+
+### Examples
+
+- **Updated all Advanced Pattern examples** to use custom error types:
+  - `RetryNetworkFeature`: Uses `RetryError` enum
+  - `MultiStepWizardFeature`: Uses `WizardError` enum
+  - `PaginatedListFeature`: Uses `PaginationError` enum
+  - Demonstrates best practices for application error design
+
+### Documentation
+
+- **Updated README**: Removed `FlowError` references and added custom error type patterns
+- **Updated Examples README**: Shows proper application-specific error handling
+
+### Bug Fixes
+
+- Fixed remaining `FlowError` reference in `PaginatedListFeature` example
+
 ## [1.2.0] - 2025-10-31
 
 ### Documentation

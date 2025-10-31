@@ -67,11 +67,31 @@ struct CounterView: View {
 }
 ```
 
-## 主な特徴
+## 5つのコア原則
 
-### グローバルストア不使用
+### 1. 単方向データフロー
 
-各ビューが`@State`で自身の状態を保持します。
+すべての状態変更は一方向に流れます：**Action → Handler → State → View**。これによりアプリの動作が予測可能でデバッグしやすくなります。
+
+```swift
+Button("読み込み") {
+    store.send(.load)  // Actionがhandlerに流れる
+}
+
+// Handlerが状態を更新
+case .load:
+    return .run { state in
+        state.data = try await api.fetch()  // StateがViewに流れる
+    }
+```
+
+- 予測可能なデータフロー
+- 状態変更を追跡しやすい
+- 明確な入力と出力
+
+### 2. ビューローカルな状態
+
+各ビューが`@State`で自身の状態を保持します。SwiftUIの哲学に沿った設計で、グローバルストアもストア階層もありません。
 
 ```swift
 struct CounterView: View {
@@ -91,80 +111,61 @@ struct CounterView: View {
 }
 ```
 
-- 状態のスコープが明確（ビューと同じライフサイクル）
+- 明確なライフサイクル（StoreはViewと連動）
 - グローバル状態の管理が不要
+- メモリ効率的
 
-### 結果を返すアクション
+### 3. 結果を返すアクション
 
-アクションは`ActionTask`を通じて結果を返せます。結果の型（`ActionResult`）は各Featureで自由に定義できます。
-
-この例では、子ビューが選択結果を親に返し、親が画面遷移を処理します：
+アクションは型付きの結果を返すことができ、関数的なパターンを実現し、副作用を明示的にします。
 
 ```swift
-struct ChildSelectFeature: Feature {
-    @Observable
-    final class State {
-        var selectedId = ""
-    }
-
-    enum Action: Sendable {
-        case select
-    }
-
-    enum ActionResult: Sendable {
-        case selected(id: String)
-    }
-
-    func handle() -> ActionHandler<Action, State, ActionResult> {
-        ActionHandler { action, state in
-            switch action {
-            case .select:
-                return .run { state in
-                    let id = state.selectedId
-                    return .selected(id: id)
-                }
-            }
-        }
-    }
+enum ActionResult: Sendable {
+    case saved(id: String)
 }
 
-struct ChildView: View {
-    @State private var store = Store(
-        initialState: .init(),
-        feature: ChildSelectFeature()
-    )
-    let onSelect: (String) async -> Void
-
-    var body: some View {
-        Button("選択") {
-            Task {
-                let result = await store.send(.select).value
-                if case .success(.selected(let id)) = result {
-                    await onSelect(id)
-                }
-            }
-        }
+// Handler内
+case .save(let title):
+    return .run { state in
+        let todo = try await api.create(title: title)
+        return .saved(id: todo.id)  // 結果を返す
     }
-}
 
-struct ParentView: View {
-    @Environment(\.navigator) private var navigator
-
-    var body: some View {
-        ChildView { selectedId in
-            await navigator.navigate(to: .detail(id: selectedId))
+// View側
+Button("保存") {
+    Task {
+        let result = await store.send(.save(title: title)).value
+        if case .success(.saved(let id)) = result {
+            await navigator.navigate(to: .detail(id: id))
         }
     }
 }
 ```
 
-この実装により：
-- `ChildFeature`が`ActionResult`を通じて選択結果を親に返す
-- `ParentView`が`onSelect`コールバックで結果を受け取る
-- 親が画面遷移などの副作用を制御
-- すべてがビューツリー内で完結し、依存関係が追跡しやすい
+- アクションが関数のように値を返す
+- 親がナビゲーションや副作用を制御
+- 型安全なコントラクト
 
-### @Observable準拠
+### 4. MainActor隔離
+
+非同期処理内で直接状態を更新できます—安全に。FlowはSwift 6の`defaultIsolation(MainActor.self)`を活用してコンパイル時の安全性を提供します。
+
+```swift
+case .fetchUser:
+    state.isLoading = true
+    return .run { state in
+        // 非同期コンテキスト内で直接状態を更新！
+        let user = try await api.fetchUser()
+        state.user = user
+        state.isLoading = false
+    }
+```
+
+- コードの局所性（ローディング、取得、エラーが1箇所に）
+- 直感的（通常のSwiftコードと同じ感覚で書ける）
+- コンパイル時安全性（データ競合はコンパイル時に検出）
+
+### 5. @Observable準拠
 
 `@ObservableObject`や`@Published`ではなく、**SwiftUI標準の@Observable**を使用します。
 
@@ -176,67 +177,8 @@ final class State {
 ```
 
 - Combine依存が不要
-- コード量が削減される
-- SwiftUIの標準APIとの統合
-
-### Swift 6 Concurrency
-
-Swift 6の並行性チェックに対応しています。`defaultIsolation(MainActor.self)`を前提とした設計です。
-
-```swift
-.defaultIsolation(MainActor.self)
-```
-
-すべての処理がMainActorで実行され、**データ競合がコンパイル時に検出**されます。
-
-```swift
-func handle() -> ActionHandler<Action, State, Void> {
-    ActionHandler { action, state in
-        switch action {
-        case .increment:
-            state.count += 1  // ✅ 同期処理も安全
-            return .none
-
-        case .loadData:
-            return .run { state in
-                let data = try await api.fetch()
-                state.data = data  // ✅ 非同期処理内でも安全に状態変更
-            }
-        }
-    }
-}
-```
-
-- スレッドセーフが保証される
-- `async/await`をネイティブサポート
-- `.run`ブロック内でも直接状態を変更可能
-- ランタイムエラーではなくコンパイルエラーで検出
-
-### 観測可能なアクション
-
-Flowは**ミドルウェア**を使用してアクションを観測できます。これにより、ロギング、分析、デバッグなどの横断的関心事を実装できます。
-
-```swift
-struct AnalyticsMiddleware: BeforeActionMiddleware {
-    let id = "Analytics"
-    let analytics: AnalyticsService
-
-    func beforeAction<Action, State>(_ action: Action, state: State) async {
-        analytics.track(String(describing: action))
-    }
-}
-
-func handle() -> ActionHandler<Action, State, Void> {
-    ActionHandler { action, state in
-        // ...
-    }
-    .use(LoggingMiddleware(category: "Counter"))
-    .use(AnalyticsMiddleware(analytics: .shared))
-}
-```
-
-- すべてのアクションを一箇所で観測
-- ロギング、分析、デバッグに利用可能
+- ボイラープレートが少ない
+- SwiftUIとプラットフォーム連携
 
 ## ドキュメント
 

@@ -482,7 +482,7 @@ extension ActionTask {
 
   /// Concatenates an array of tasks to run sequentially.
   ///
-  /// Throws `FlowError.noTasksToExecute` if the task array is empty.
+  /// Throws `StoreError.noTasksToExecute` if the task array is empty.
   /// This strict behavior helps catch logic errors early.
   ///
   /// ## Example: Dynamic Tasks with Guard
@@ -507,10 +507,10 @@ extension ActionTask {
   ///
   /// - Parameter tasks: Array of tasks to concatenate (must not be empty)
   /// - Returns: A single task that runs all tasks sequentially
-  /// - Throws: `FlowError.noTasksToExecute` if tasks array is empty
+  /// - Throws: `StoreError.noTasksToExecute` if tasks array is empty
   public static func concatenate(_ tasks: [ActionTask]) throws -> ActionTask {
     guard let first = tasks.first else {
-      throw FlowError.noTasksToExecute(context: "concatenate(_:)")
+      throw StoreError.noTasksToExecute(context: "concatenate(_:)")
     }
     // TCA-style reduce pattern implementing Monoid
     return tasks.dropFirst().reduce(first) { $0.concatenate(with: $1) }

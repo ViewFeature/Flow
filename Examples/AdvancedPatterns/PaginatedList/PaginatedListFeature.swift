@@ -1,6 +1,18 @@
 import Flow
 import Foundation
 
+/// Application-specific errors for pagination operations.
+enum PaginationError: Error, LocalizedError {
+  case fetchFailed(underlying: Error)
+
+  var errorDescription: String? {
+    switch self {
+    case .fetchFailed(let underlying):
+      return "Failed to fetch items: \(underlying.localizedDescription)"
+    }
+  }
+}
+
 /// Paginated list feature with infinite scrolling.
 ///
 /// Demonstrates:
@@ -28,7 +40,7 @@ struct PaginatedListFeature: Feature {
     var nextCursor: String?  // Pagination cursor
     var hasMore = true  // More pages available
 
-    var error: FlowError?
+    var error: PaginationError?
 
     init(
       items: [Item] = [],
@@ -72,16 +84,16 @@ struct PaginatedListFeature: Feature {
             state.isInitialLoading = false
             state.error = nil
           } catch {
-            throw FlowError.networkError(underlying: error)
+            throw PaginationError.fetchFailed(underlying: error)
           }
         }
         .cancellable(id: "fetch-page", cancelInFlight: true)
         .catch { error, state in
           state.isInitialLoading = false
-          if let vfError = error as? FlowError {
-            state.error = vfError
+          if let paginationError = error as? PaginationError {
+            state.error = paginationError
           } else {
-            state.error = .networkError(underlying: error)
+            state.error = .fetchFailed(underlying: error)
           }
         }
 
@@ -102,16 +114,16 @@ struct PaginatedListFeature: Feature {
             state.isRefreshing = false
             state.error = nil
           } catch {
-            throw FlowError.networkError(underlying: error)
+            throw PaginationError.fetchFailed(underlying: error)
           }
         }
         .cancellable(id: "fetch-page", cancelInFlight: true)
         .catch { error, state in
           state.isRefreshing = false
-          if let vfError = error as? FlowError {
-            state.error = vfError
+          if let paginationError = error as? PaginationError {
+            state.error = paginationError
           } else {
-            state.error = .networkError(underlying: error)
+            state.error = .fetchFailed(underlying: error)
           }
         }
 
@@ -139,16 +151,16 @@ struct PaginatedListFeature: Feature {
             state.isLoadingMore = false
             state.error = nil
           } catch {
-            throw FlowError.networkError(underlying: error)
+            throw PaginationError.fetchFailed(underlying: error)
           }
         }
         .cancellable(id: "fetch-page", cancelInFlight: true)
         .catch { error, state in
           state.isLoadingMore = false
-          if let vfError = error as? FlowError {
-            state.error = vfError
+          if let paginationError = error as? PaginationError {
+            state.error = paginationError
           } else {
-            state.error = .networkError(underlying: error)
+            state.error = .fetchFailed(underlying: error)
           }
         }
 
@@ -165,10 +177,10 @@ struct PaginatedListFeature: Feature {
         state.isRefreshing = false
         state.isLoadingMore = false
 
-        if let vfError = error as? FlowError {
-          state.error = vfError
+        if let paginationError = error as? PaginationError {
+          state.error = paginationError
         } else {
-          state.error = .networkError(underlying: error)
+          state.error = .fetchFailed(underlying: error)
         }
 
         return .none

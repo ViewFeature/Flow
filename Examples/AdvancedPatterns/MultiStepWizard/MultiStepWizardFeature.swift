@@ -1,6 +1,21 @@
 import Flow
 import Foundation
 
+/// Application-specific errors for wizard operations.
+enum WizardError: Error, LocalizedError {
+  case validationFailed(step: String, errors: [String])
+  case submissionFailed(underlying: Error)
+
+  var errorDescription: String? {
+    switch self {
+    case .validationFailed(let step, let errors):
+      return "Validation failed in \(step): \(errors.joined(separator: ", "))"
+    case .submissionFailed(let underlying):
+      return "Submission failed: \(underlying.localizedDescription)"
+    }
+  }
+}
+
 /// Multi-step wizard/form with complex validation and navigation.
 ///
 /// Demonstrates:
@@ -39,7 +54,7 @@ struct MultiStepWizardFeature: Feature {
     // UI state
     var isValidating = false
     var isSubmitting = false
-    var error: FlowError?
+    var error: WizardError?
 
     // Validation errors per step
     var personalInfoErrors: [String] = []
@@ -219,15 +234,15 @@ struct MultiStepWizardFeature: Feature {
             // Reset wizard after successful submission
             resetWizard(state: state)
           } catch {
-            throw FlowError.networkError(underlying: error)
+            throw WizardError.submissionFailed(underlying: error)
           }
         }
         .catch { error, state in
           state.isSubmitting = false
-          if let vfError = error as? FlowError {
-            state.error = vfError
+          if let wizardError = error as? WizardError {
+            state.error = wizardError
           } else {
-            state.error = .networkError(underlying: error)
+            state.error = .submissionFailed(underlying: error)
           }
         }
 

@@ -1,14 +1,6 @@
 import Foundation
 import Observation
 
-/// Errors that can occur during Store operations.
-public enum StoreError: Error, Sendable {
-  /// The store was deallocated before the operation could complete
-  case deallocated
-  /// The operation was cancelled
-  case cancelled
-}
-
 /// The main store for managing application state and dispatching actions.
 ///
 /// `Store` provides a Redux-like unidirectional data flow architecture for SwiftUI apps
@@ -366,7 +358,7 @@ public final class Store<F: Feature> {
       // INVARIANT: flattenConcatenated() always returns ≥1 element
       //
       // Proof:
-      // 1. concatenate([]) now throws FlowError.noTasksToExecute
+      // 1. concatenate([]) now throws StoreError.noTasksToExecute
       // 2. .concatenated can only be constructed via concatenate()
       // 3. Therefore, .concatenated always contains ≥1 task
       // 4. flattenConcatenated() preserves this property

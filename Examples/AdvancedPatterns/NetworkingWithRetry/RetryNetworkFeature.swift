@@ -1,12 +1,27 @@
 import Flow
 import Foundation
 
+/// Application-specific errors for retry networking.
+enum RetryError: Error, LocalizedError {
+  case maxRetriesExceeded(attempts: Int)
+  case networkFailure(underlying: Error)
+
+  var errorDescription: String? {
+    switch self {
+    case .maxRetriesExceeded(let attempts):
+      return "Failed after \(attempts) retry attempts"
+    case .networkFailure(let underlying):
+      return "Network error: \(underlying.localizedDescription)"
+    }
+  }
+}
+
 /// Advanced networking feature with exponential backoff retry logic.
 ///
 /// Demonstrates:
 /// - Retry with exponential backoff
 /// - Maximum retry attempts
-/// - Error handling with FlowError
+/// - Error handling with custom error types
 /// - Task cancellation
 /// - Loading states during retries
 struct RetryNetworkFeature: Feature {
@@ -32,7 +47,7 @@ struct RetryNetworkFeature: Feature {
   final class State {
     var data: [Item]?
     var isLoading = false
-    var error: FlowError?
+    var error: RetryError?
 
     // Retry tracking
     var retryCount = 0
@@ -41,7 +56,7 @@ struct RetryNetworkFeature: Feature {
     init(
       data: [Item]? = nil,
       isLoading: Bool = false,
-      error: FlowError? = nil
+      error: RetryError? = nil
     ) {
       self.data = data
       self.isLoading = isLoading
@@ -73,9 +88,7 @@ struct RetryNetworkFeature: Feature {
 
       case .retryFetch:
         guard state.retryCount < maxRetries else {
-          state.error = .custom(
-            message: "Maximum retry attempts (\(maxRetries)) exceeded"
-          )
+          state.error = .maxRetriesExceeded(attempts: maxRetries)
           state.isLoading = false
           return .none
         }
@@ -121,7 +134,7 @@ struct RetryNetworkFeature: Feature {
           )
         } else {
           // Max retries exceeded
-          state.error = .networkError(underlying: error)
+          state.error = .networkFailure(underlying: error)
           return .none
         }
       }
@@ -152,20 +165,17 @@ struct RetryNetworkFeature: Feature {
           // Retry recursively
           try await performFetch(state: state)
         } else {
-          throw FlowError.custom(
-            message: "Failed after \(maxRetries) retries",
-            underlying: error
-          )
+          throw RetryError.maxRetriesExceeded(attempts: maxRetries)
         }
       }
     }
     .cancellable(id: "fetch-data", cancelInFlight: true)
     .catch { error, state in
       state.isLoading = false
-      if let vfError = error as? FlowError {
-        state.error = vfError
+      if let retryError = error as? RetryError {
+        state.error = retryError
       } else {
-        state.error = .networkError(underlying: error)
+        state.error = .networkFailure(underlying: error)
       }
     }
   }
